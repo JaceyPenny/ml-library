@@ -74,6 +74,8 @@ public class LayerLinear extends Layer {
         Vector mx_vector = Mx_product.serialize();
 
         Vector b = Vector.copy(averageY);
+
+        // b -= mx_vector
         b.addScaled(-1, mx_vector);
 
         Vector M_serialized = M.serialize();

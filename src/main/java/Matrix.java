@@ -7,12 +7,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.ArrayList;
+import java.util.*;
 import java.lang.StringBuilder;
-import java.util.Comparator;
 
 
 /// This stores a matrix, A.K.A. data set, A.K.A. table. Each element is
@@ -581,6 +577,14 @@ public class Matrix {
         }
 
         return column;
+    }
+
+    public void shuffleRows() {
+        Random random = new Random();
+        for (int i = rows(); i >= 2; i--) {
+            int r = random.nextInt(i);
+            swapRows(i - 1, r);
+        }
     }
 
     /// Swaps the positions of the two specified rows
@@ -1362,4 +1366,52 @@ public class Matrix {
 		}
 		return m;
 	}*/
+
+	public static int[] computeFoldSizes(int totalLength, int folds) {
+        int foldSize = totalLength / folds;
+
+        int usedRows = foldSize * folds;
+        int unusedRows = totalLength - usedRows;
+
+        int[] foldSizes = new int[folds];
+        Arrays.fill(foldSizes, foldSize);
+
+        for (int i = 0; i < unusedRows; i++) {
+            foldSizes[i] += 1;
+        }
+
+        return foldSizes;
+    }
+
+	public static Matrix matrixWithoutFold(int[] foldSizes, int foldIndex, Matrix other) {
+        int foldSize = foldSizes[foldIndex];
+
+        Matrix newMatrix = new Matrix(other.rows() - foldSize, other.cols());
+
+	    int rowsBefore = 0;
+	    for (int i = 0; i < foldIndex; i++) {
+	        rowsBefore += foldSizes[i];
+        }
+
+        int rowsAfter = other.rows() - foldSize - rowsBefore;
+
+	    newMatrix.copyBlock(0, 0, other, 0, 0, rowsBefore, other.cols());
+	    newMatrix.copyBlock(rowsBefore, 0, other, rowsBefore + foldSize, 0, rowsAfter, other.cols());
+
+	    return newMatrix;
+    }
+
+    public static Matrix matrixFold(int[] foldSizes, int foldIndex, Matrix other) {
+	    int foldSize = foldSizes[foldIndex];
+	    Matrix newMatrix = new Matrix(foldSizes[foldIndex], other.cols());
+
+        int rowsBefore = 0;
+        for (int i = 0; i < foldIndex; i++) {
+            rowsBefore += foldSizes[i];
+        }
+
+        newMatrix.copyBlock(0, 0, other, rowsBefore, 0, foldSize, other.cols());
+
+        return newMatrix;
+    }
 }

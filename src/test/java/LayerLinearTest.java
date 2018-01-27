@@ -52,6 +52,7 @@ public class LayerLinearTest extends BaseTest {
 
         double averageError = error / (double) (x_features * y_features);
 
+        System.out.println(averageError);
         assertTrue(averageError < standardDeviation);
     }
 }
