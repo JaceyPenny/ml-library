@@ -5,7 +5,7 @@ public class NeuralNetwork extends SupervisedLearner {
     private int layerSize;
 
     private List<LayerLinear> layers;
-    private List<Vector> layerWeights;
+    private Vector weights;
 
     public NeuralNetwork() {
         this(1);
@@ -13,7 +13,6 @@ public class NeuralNetwork extends SupervisedLearner {
 
     public NeuralNetwork(int layerSize) {
         this.layers = new ArrayList<>();
-        this.layerWeights = new ArrayList<>();
         this.layerSize = layerSize;
     }
 
@@ -24,11 +23,10 @@ public class NeuralNetwork extends SupervisedLearner {
 
     private void initializeLayers(int inputs, int outputs) {
         layers.clear();
-        layerWeights.clear();
+        weights = new Vector(outputs + inputs * outputs);
 
         for (int i = 0; i < layerSize; i++) {
             layers.add(new LayerLinear(inputs, outputs));
-            layerWeights.add(new Vector(outputs + inputs * outputs));
         }
     }
 
@@ -36,10 +34,7 @@ public class NeuralNetwork extends SupervisedLearner {
     void train(Matrix features, Matrix labels) {
         initializeLayers(features.cols(), labels.cols());
 
-        for (int i = 0; i < layers.size(); i++) {
-            LayerLinear layer = layers.get(i);
-            Vector weights = layerWeights.get(i);
-
+        for (LayerLinear layer : layers) {
             layer.ordinaryLeastSquares(features, labels, weights);
         }
     }
@@ -53,7 +48,6 @@ public class NeuralNetwork extends SupervisedLearner {
         // For now, just use the first layer. I don't know what the implementation of future
         // neural network prediction needs to be
         LayerLinear layer = layers.get(0);
-        Vector weights = layerWeights.get(0);
 
         layer.activate(weights, in);
         return layer.activation;
