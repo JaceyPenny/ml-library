@@ -918,7 +918,7 @@ public class Matrix {
                 for (int i = 0; i < res.rows(); i++) {
                     for (int j = 0; j < res.cols(); j++) {
                         double d = 0.0;
-                        for (int k = 0; k < a.cols(); k++)
+                        for (int k = 0; k < a.rows(); k++)
                             d += a.m_data.get(k)[i] * b.m_data.get(j)[k];
                         res.m_data.get(i)[j] = d;
                     }
@@ -929,7 +929,7 @@ public class Matrix {
                 for (int i = 0; i < res.rows(); i++) {
                     for (int j = 0; j < res.cols(); j++) {
                         double d = 0.0;
-                        for (int k = 0; k < a.cols(); k++)
+                        for (int k = 0; k < a.rows(); k++)
                             d += a.m_data.get(k)[i] * b.m_data.get(k)[j];
                         res.m_data.get(i)[j] = d;
                     }
