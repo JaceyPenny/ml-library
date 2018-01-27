@@ -23,14 +23,4 @@ class BaselineLearner extends SupervisedLearner {
     Vector predict(Vector in) {
         return new Vector(mode);
     }
-
-    @Override
-    double computeSumSquaredError(Matrix testFeatures, Matrix expectedLabels) {
-        return 0;
-    }
-
-    @Override
-    double crossValidation(int folds, int repetitions, Matrix features, Matrix labels) {
-        return 0;
-    }
 }
