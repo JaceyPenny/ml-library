@@ -23,7 +23,7 @@ public class LayerLinear extends Layer {
         Vector productVector = Mx.serialize();
 
         productVector.add(b);
-        super.activation = productVector;
+        setActivation(productVector);
     }
 
     private void addOuterProductToMatrix(Vector first, Vector second, Matrix target) {

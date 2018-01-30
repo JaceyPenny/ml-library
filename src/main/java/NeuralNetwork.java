@@ -50,6 +50,6 @@ public class NeuralNetwork extends SupervisedLearner {
         LayerLinear layer = layers.get(0);
 
         layer.activate(weights, in);
-        return layer.activation;
+        return layer.getActivation();
     }
 }
