@@ -194,7 +194,9 @@ public class Matrix {
         } catch (FileNotFoundException e) {
             throw new IllegalArgumentException("Failed to open file: " + filename + ".");
         } finally {
-            s.close();
+            if (s != null) {
+                s.close();
+            }
         }
     }
 
