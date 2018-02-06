@@ -1,17 +1,45 @@
 abstract class Layer {
-    private Vector activation;
+  private int inputs;
+  private int outputs;
 
-    Layer(int inputs, int outputs) {
-        activation = new Vector(outputs);
-    }
+  private Vector activation;
+  private Vector blame;
 
-    abstract void activate(Vector weights, Vector x);
+  Layer(int inputs, int outputs) {
+    this.inputs = inputs;
+    this.outputs = outputs;
 
-    protected void setActivation(Vector vector) {
-      this.activation = vector;
-    }
+    activation = new Vector(outputs);
+    blame = new Vector(outputs);
+  }
 
-    public Vector getActivation() {
-        return activation;
-    }
+  public int getInputs() {
+    return inputs;
+  }
+
+  public int getOutputs() {
+    return outputs;
+  }
+
+  abstract void activate(Vector weights, Vector x);
+
+  protected void setActivation(Vector vector) {
+    this.activation = vector;
+  }
+
+  public Vector getActivation() {
+    return activation;
+  }
+
+  protected void setBlame(Vector blame) {
+    this.blame = blame;
+  }
+
+  public Vector getBlame() {
+    return blame;
+  }
+
+  abstract void backPropagate(Vector weights, Vector previousBlame);
+
+  abstract void updateGradient(Vector weights, Vector gradient);
 }
