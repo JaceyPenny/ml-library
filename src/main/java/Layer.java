@@ -41,5 +41,5 @@ abstract class Layer {
 
   abstract void backPropagate(Vector weights, Vector previousBlame);
 
-  abstract void updateGradient(Vector weights, Vector gradient);
+  abstract void updateGradient(Vector x, Vector gradient);
 }

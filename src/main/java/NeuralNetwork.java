@@ -5,7 +5,7 @@ public class NeuralNetwork extends SupervisedLearner {
   private int layerSize;
 
   private List<LayerLinear> layers;
-  private Vector weights;
+  private List<Vector> allWeights;
 
   public NeuralNetwork() {
     this(1);
@@ -14,6 +14,7 @@ public class NeuralNetwork extends SupervisedLearner {
   public NeuralNetwork(int layerSize) {
     this.layers = new ArrayList<>();
     this.layerSize = layerSize;
+    this.allWeights = new ArrayList<>();
   }
 
   @Override
@@ -23,7 +24,10 @@ public class NeuralNetwork extends SupervisedLearner {
 
   private void initializeLayers(int inputs, int outputs) {
     layers.clear();
-    weights = new Vector(outputs + inputs * outputs);
+
+    for (int i = 0; i < layerSize; i++) {
+      allWeights.add(new Vector(outputs + inputs * outputs));
+    }
 
     for (int i = 0; i < layerSize; i++) {
       layers.add(new LayerLinear(inputs, outputs));
@@ -34,8 +38,8 @@ public class NeuralNetwork extends SupervisedLearner {
   void train(Matrix features, Matrix labels) {
     initializeLayers(features.cols(), labels.cols());
 
-    for (LayerLinear layer : layers) {
-      layer.ordinaryLeastSquares(features, labels, weights);
+    for (int i = 0; i < layers.size(); i++) {
+      layers.get(i).ordinaryLeastSquares(features, labels, allWeights.get(i));
     }
   }
 
@@ -45,11 +49,13 @@ public class NeuralNetwork extends SupervisedLearner {
       throw new IllegalStateException("The network has not been trained yet.");
     }
 
-    // For now, just use the first layer. I don't know what the implementation of future
-    // neural network prediction needs to be
-    LayerLinear layer = layers.get(0);
+    layers.get(0).activate(allWeights.get(0), in);
 
-    layer.activate(weights, in);
-    return layer.getActivation();
+    for (int i = 1; i < layers.size(); i++) {
+      Vector previousActivation = layers.get(i - 1).getActivation();
+      layers.get(i).activate(allWeights.get(i), previousActivation);
+    }
+
+    return layers.get(layers.size() - 1).getActivation();
   }
 }

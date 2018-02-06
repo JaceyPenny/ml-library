@@ -4,19 +4,10 @@ public class LayerLinear extends Layer {
     super(inputs, outputs);
   }
 
-  private Vector extractB(Vector weights) {
-    return new Vector(weights, 0, getOutputs());
-  }
-
-  private Matrix extractM(Vector weights) {
-    Vector _MTemp = new Vector(weights, getOutputs(), getOutputs() * getInputs());
-    return Matrix.deserialize(_MTemp, getOutputs(), getInputs());
-  }
-
   @Override
   void activate(Vector weights, Vector x) {
-    Vector b = extractB(weights);
-    Matrix M = extractM(weights);
+    Vector b = WeightUtils.extract_b(weights, getOutputs());
+    Matrix M = WeightUtils.extract_M(weights, getInputs(), getOutputs());
 
     Matrix _xMatrix = new Matrix(x, Matrix.VectorType.ROW);
     Matrix Mx = Matrix.multiply(_xMatrix, M, false, true);
@@ -79,15 +70,13 @@ public class LayerLinear extends Layer {
     // b -= mx_vector
     b.addScaled(-1, mx_vector);
 
-    Vector M_serialized = M.serialize();
-
-    weights.set(0, b);
-    weights.set(b.size(), M_serialized);
+    WeightUtils.set_b(weights, b);
+    WeightUtils.set_M(weights, M);
   }
 
   @Override
   void backPropagate(Vector weights, Vector previousBlame) {
-    Matrix M = extractM(weights);
+    Matrix M = WeightUtils.extract_M(weights, getInputs(), getOutputs());
     Matrix blameMatrix = new Matrix(getBlame(), Matrix.VectorType.COLUMN);
 
     Matrix product = Matrix.multiply(M, blameMatrix, true, false);
@@ -95,7 +84,9 @@ public class LayerLinear extends Layer {
   }
 
   @Override
-  void updateGradient(Vector weights, Vector gradient) {
-
+  void updateGradient(Vector x, Vector gradient) {
+    Matrix outerProduct = Vector.outerProduct(getBlame(), x);
+    WeightUtils.set_b(gradient, getBlame());
+    WeightUtils.set_M(gradient, outerProduct);
   }
 }

@@ -177,6 +177,21 @@ public class Vector {
     return array;
   }
 
+  public static Matrix outerProduct(Vector a, Vector b) {
+    if (a.size() == 0 || b.size() == 0) {
+      throw new IllegalArgumentException("Cannot compute the outer product for empty vectors.");
+    }
+
+    Matrix result = new Matrix(a.size(), b.size());
+    for (int i = 0; i < a.size(); i++) {
+      for (int j = 0; j < b.size(); j++) {
+        result.set(i, j, a.get(i) * a.get(j));
+      }
+    }
+
+    return result;
+  }
+
   @Override
   public boolean equals(Object other) {
     return other instanceof Vector && Arrays.equals(this.vals, ((Vector) other).vals);

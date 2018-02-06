@@ -753,6 +753,13 @@ public class Matrix {
     }
   }
 
+  /**
+   * Deserializes a matrix from a vector given the matrix dimensions.
+   * Matrices are deserialized row-wise, meaning that rows are assembled by taking contiguous chunks
+   * from the input vector.
+   * <br>
+   * This operation <b>copies</b> the values from the input vector.
+   */
   public static Matrix deserialize(Vector vector, int rows, int columns) {
     if (vector.size() < rows * columns) {
       throw new IllegalArgumentException("The supplied vector is too small to fill a matrix of size (" + rows + ", " + columns);
