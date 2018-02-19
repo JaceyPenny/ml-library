@@ -21,7 +21,7 @@ abstract class Layer {
     return outputs;
   }
 
-  abstract void activate(Vector weights, Vector x);
+  abstract void activate(Vector x);
 
   protected void setActivation(Vector vector) {
     this.activation = vector;
@@ -39,7 +39,11 @@ abstract class Layer {
     return blame;
   }
 
-  abstract void backPropagate(Vector weights, Vector previousBlame);
+  abstract void backPropagate(Vector previousBlame);
 
-  abstract void updateGradient(Vector x, Vector gradient);
+  abstract void resetGradient();
+
+  abstract void updateGradient(Vector x);
+
+  abstract void applyGradient(double learningRate);
 }

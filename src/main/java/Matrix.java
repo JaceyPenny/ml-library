@@ -719,6 +719,11 @@ public class Matrix {
   }
 
 
+  public void add(Matrix that) {
+    addScaled(that, 1);
+  }
+
+
   /// Adds every element in that matrix to this one
   public void addScaled(Matrix that, double scalar) {
     if (that.rows() != this.rows() || that.cols() != this.cols())
@@ -726,7 +731,7 @@ public class Matrix {
     for (int i = 0; i < rows(); i++) {
       Vector dest = this.row(i);
       Vector src = that.row(i);
-      dest.addScaled(scalar, src);
+      dest.addScaled(src, scalar);
     }
   }
 

@@ -136,7 +136,7 @@ public class Vector {
       vals[start + i] *= scalar;
   }
 
-  public void addScaled(double scalar, Vector that) {
+  public void addScaled(Vector that, double scalar) {
     if (that.size() != this.size())
       throw new IllegalArgumentException("mismatching sizes");
     for (int i = 0; i < len; i++)
@@ -190,6 +190,10 @@ public class Vector {
     }
 
     return result;
+  }
+
+  public Matrix asMatrix(Matrix.VectorType vectorType) {
+    return new Matrix(this, vectorType);
   }
 
   @Override
