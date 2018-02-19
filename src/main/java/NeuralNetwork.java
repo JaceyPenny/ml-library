@@ -58,4 +58,21 @@ public class NeuralNetwork extends SupervisedLearner {
 
     return layers.get(layers.size() - 1).getActivation();
   }
+
+  void backPropagate(Vector weights, Vector target) {
+    Vector blame = Vector.copy(target);
+    blame.addScaled(-1, layers.get(layers.size() - 1).getActivation());
+    layers.get(layers.size() - 1).setBlame(blame);
+
+    for (int i = layers.size() - 2; i > 0; i++) {
+      LayerLinear layer = layers.get(i);
+
+      layer.backPropagate(weights, blame);
+      blame = layer.getBlame();
+    }
+  }
+
+  void updateGradient() {
+
+  }
 }

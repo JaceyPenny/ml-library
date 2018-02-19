@@ -77,16 +77,23 @@ public class LayerLinear extends Layer {
   @Override
   void backPropagate(Vector weights, Vector previousBlame) {
     Matrix M = WeightUtils.extract_M(weights, getInputs(), getOutputs());
-    Matrix blameMatrix = new Matrix(getBlame(), Matrix.VectorType.COLUMN);
+    Matrix blameMatrix = new Matrix(previousBlame, Matrix.VectorType.COLUMN);
 
     Matrix product = Matrix.multiply(M, blameMatrix, true, false);
-    previousBlame.set(0, product.serialize()); // previousBlame = M^T * blame;
+    setBlame(product.serialize());
   }
 
   @Override
   void updateGradient(Vector x, Vector gradient) {
+    Vector b = WeightUtils.extract_b(gradient, getOutputs());
+    Matrix M = WeightUtils.extract_M(gradient, getInputs(), getOutputs());
+
+    b.add(getBlame());
+
     Matrix outerProduct = Vector.outerProduct(getBlame(), x);
-    WeightUtils.set_b(gradient, getBlame());
-    WeightUtils.set_M(gradient, outerProduct);
+    M.addScaled(M, 1);
+
+    WeightUtils.set_b(gradient, b);
+    WeightUtils.set_M(gradient, M);
   }
 }
