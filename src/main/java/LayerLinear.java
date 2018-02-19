@@ -15,6 +15,11 @@ public class LayerLinear extends Layer {
   }
 
   @Override
+  public LayerType getLayerType() {
+    return LayerType.LINEAR;
+  }
+
+  @Override
   protected void resetGradient() {
     if (weightsGradient == null) {
       weightsGradient = new Matrix(getOutputs(), getInputs());

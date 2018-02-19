@@ -13,6 +13,8 @@ abstract class Layer {
     blame = new Vector(outputs);
   }
 
+  public abstract LayerType getLayerType();
+
   public int getInputs() {
     return inputs;
   }
