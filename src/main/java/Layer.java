@@ -13,6 +13,8 @@ abstract class Layer {
     blame = new Vector(outputs);
   }
 
+  public abstract LayerType getLayerType();
+
   public int getInputs() {
     return inputs;
   }
@@ -21,7 +23,7 @@ abstract class Layer {
     return outputs;
   }
 
-  abstract void activate(Vector weights, Vector x);
+  abstract Vector activate(Vector x);
 
   protected void setActivation(Vector vector) {
     this.activation = vector;
@@ -39,7 +41,18 @@ abstract class Layer {
     return blame;
   }
 
-  abstract void backPropagate(Vector weights, Vector previousBlame);
+  abstract Vector backPropagate();
 
-  abstract void updateGradient(Vector x, Vector gradient);
+  abstract void resetGradient();
+
+  abstract void updateGradient(Vector x);
+
+  abstract void applyGradient(double learningRate);
+
+  public String topologyString() {
+    String name = getLayerType().toString();
+    int weights = (this instanceof LayerLinear) ? this.getInputs() * getOutputs() + getOutputs() : 0;
+
+    return String.format("[%s: %d->%d, Weights=%d]", name, getInputs(), getOutputs(), weights);
+  }
 }

@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.function.Supplier;
 
 
 /// This stores a matrix, A.K.A. data set, A.K.A. table. Each element is
@@ -107,6 +108,11 @@ public class Matrix {
     return list;
   }
 
+  public static Matrix fromARFF(String filename) {
+    Matrix matrix = new Matrix();
+    matrix.loadARFF(filename);
+    return matrix;
+  }
 
   /// Loads the matrix from an ARFF file
   public void loadARFF(String filename) {
@@ -201,15 +207,16 @@ public class Matrix {
 
 
   /// Returns a string representation of this object
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    for (int j = 0; j < rows(); j++) {
-      if (j > 0)
-        sb.append("\n");
-      sb.append(row(j).toString());
-    }
-    return sb.toString();
-  }
+//  public String toString() {
+//    StringBuilder sb = new StringBuilder();
+//    for (int j = 0; j < rows(); j++) {
+//      if (j > 0)
+//        sb.append("\n");
+//      sb.append(row(j).toString());
+//    }
+//    return sb.toString();
+//  }
+  // TODO
 
 
   public void printRow(double[] row, PrintStream os) {
@@ -709,6 +716,14 @@ public class Matrix {
     }
   }
 
+  public void fill(Supplier<Double> supplier) {
+    for (int i = 0; i < rows(); i++) {
+      for (int j = 0; j < cols(); j++) {
+        set(i, j, supplier.get());
+      }
+    }
+  }
+
 
   /// Sets every element in the matrix to the specified value.
   public void scale(double scalar) {
@@ -719,6 +734,11 @@ public class Matrix {
   }
 
 
+  public void add(Matrix that) {
+    addScaled(that, 1);
+  }
+
+
   /// Adds every element in that matrix to this one
   public void addScaled(Matrix that, double scalar) {
     if (that.rows() != this.rows() || that.cols() != this.cols())
@@ -726,7 +746,7 @@ public class Matrix {
     for (int i = 0; i < rows(); i++) {
       Vector dest = this.row(i);
       Vector src = that.row(i);
-      dest.addScaled(scalar, src);
+      dest.addScaled(src, scalar);
     }
   }
 
@@ -789,6 +809,21 @@ public class Matrix {
     }
 
     return outputVector;
+  }
+
+  public double errorAgainst(Matrix other) {
+    if (rows() != other.rows() || cols() != other.cols()) {
+      throw new IllegalArgumentException("These matrices do not have the same size.");
+    }
+
+    double error = 0;
+    for (int i = 0; i < rows(); i++) {
+      for (int j = 0; j < cols(); j++) {
+        error += Math.abs(get(i, j) - other.get(i, j));
+      }
+    }
+
+    return error;
   }
 
   private static class SortComparator implements Comparator<double[]> {

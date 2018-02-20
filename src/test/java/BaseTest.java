@@ -44,7 +44,7 @@ abstract class BaseTest {
   }
 
   void addRandomNoiseToVector(Vector target, double standardDeviations) {
-    for (int i = 0; i < target.len; i++) {
+    for (int i = 0; i < target.size(); i++) {
       double value = target.get(i);
       double gaussianShift = random.nextGaussian() * standardDeviations;
 

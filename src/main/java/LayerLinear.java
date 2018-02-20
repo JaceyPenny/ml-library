@@ -1,21 +1,75 @@
+import java.util.function.Supplier;
+
 public class LayerLinear extends Layer {
+  private Matrix weights;
+  private Vector bias;
+
+  private Matrix weightsGradient;
+  private Vector biasGradient;
 
   public LayerLinear(int inputs, int outputs) {
     super(inputs, outputs);
+
+    weights = new Matrix(outputs, inputs);
+    bias = new Vector(outputs);
+
+    resetGradient();
   }
 
   @Override
-  void activate(Vector weights, Vector x) {
-    Vector b = WeightUtils.extract_b(weights, getOutputs());
-    Matrix M = WeightUtils.extract_M(weights, getInputs(), getOutputs());
+  public LayerType getLayerType() {
+    return LayerType.LINEAR;
+  }
 
-    Matrix _xMatrix = new Matrix(x, Matrix.VectorType.ROW);
-    Matrix Mx = Matrix.multiply(_xMatrix, M, false, true);
+  public void setWeights(Matrix weights) {
+    this.weights = weights;
+  }
+
+  public Matrix getWeights() {
+    return weights;
+  }
+
+  public void setBias(Vector bias) {
+    this.bias = bias;
+  }
+
+  public Vector getBias() {
+    return bias;
+  }
+
+  public void initializeWeights() {
+    fillAll(() -> Math.max(0.03, 1.0 / getInputs()) * NeuralNetwork.RANDOM.nextGaussian());
+  }
+
+  private void fillAll(Supplier<Double> supplier) {
+    weights.fill(supplier);
+    bias.fill(supplier);
+  }
+
+  @Override
+  protected void resetGradient() {
+    if (weightsGradient == null) {
+      weightsGradient = new Matrix(getOutputs(), getInputs());
+    }
+
+    if (biasGradient == null) {
+      biasGradient = new Vector(getOutputs());
+    }
+
+    weightsGradient.fill(0);
+    biasGradient.fill(0);
+  }
+
+  @Override
+  Vector activate(Vector x) {
+    Matrix xMatrix = x.asMatrix(Matrix.VectorType.COLUMN);
+    Matrix Mx = Matrix.multiply(weights, xMatrix);
 
     Vector productVector = Mx.serialize();
 
-    productVector.add(b);
+    productVector.add(bias);
     setActivation(productVector);
+    return getActivation();
   }
 
   private void addOuterProductToMatrix(Vector first, Vector second, Matrix target) {
@@ -29,7 +83,7 @@ public class LayerLinear extends Layer {
     }
   }
 
-  public void ordinaryLeastSquares(Matrix X, Matrix Y, Vector weights) {
+  public void ordinaryLeastSquares(Matrix X, Matrix Y) {
     Vector averageX = new Vector(X.cols());
     Vector averageY = new Vector(Y.cols());
 
@@ -45,12 +99,11 @@ public class LayerLinear extends Layer {
     Matrix secondTerm = new Matrix(X.cols(), X.cols());
 
     for (int i = 0; i < X.rows(); i++) {
-
       Vector y_i_minus_average_y = Vector.copy(Y.row(i));
-      y_i_minus_average_y.addScaled(-1, averageY);
+      y_i_minus_average_y.addScaled(averageY, -1);
 
       Vector x_i_minus_average_x = Vector.copy(X.row(i));
-      x_i_minus_average_x.addScaled(-1, averageX);
+      x_i_minus_average_x.addScaled(averageX, -1);
 
       addOuterProductToMatrix(y_i_minus_average_y, x_i_minus_average_x, firstTerm);
       addOuterProductToMatrix(x_i_minus_average_x, x_i_minus_average_x, secondTerm);
@@ -68,25 +121,31 @@ public class LayerLinear extends Layer {
     Vector b = Vector.copy(averageY);
 
     // b -= mx_vector
-    b.addScaled(-1, mx_vector);
+    b.addScaled(mx_vector, -1);
 
-    WeightUtils.set_b(weights, b);
-    WeightUtils.set_M(weights, M);
+    weights = M;
+    bias = b;
   }
 
   @Override
-  void backPropagate(Vector weights, Vector previousBlame) {
-    Matrix M = WeightUtils.extract_M(weights, getInputs(), getOutputs());
-    Matrix blameMatrix = new Matrix(getBlame(), Matrix.VectorType.COLUMN);
+  protected Vector backPropagate() {
+    Matrix blameMatrix = getBlame().asMatrix(Matrix.VectorType.COLUMN);
 
-    Matrix product = Matrix.multiply(M, blameMatrix, true, false);
-    previousBlame.set(0, product.serialize()); // previousBlame = M^T * blame;
+    Matrix previousBlameMatrix = Matrix.multiply(weights, blameMatrix, true, false);
+    return previousBlameMatrix.serialize();
   }
 
   @Override
-  void updateGradient(Vector x, Vector gradient) {
-    Matrix outerProduct = Vector.outerProduct(getBlame(), x);
-    WeightUtils.set_b(gradient, getBlame());
-    WeightUtils.set_M(gradient, outerProduct);
+  void updateGradient(Vector x) {
+    addOuterProductToMatrix(getBlame(), x, weightsGradient);
+    biasGradient.add(getBlame());
+  }
+
+  @Override
+  void applyGradient(double learningRate) {
+    weights.addScaled(weightsGradient, learningRate);
+    bias.addScaled(biasGradient, learningRate);
+
+    resetGradient();
   }
 }
