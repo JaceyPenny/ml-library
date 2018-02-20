@@ -1,5 +1,3 @@
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -43,7 +41,7 @@ public class NeuralNetwork extends SupervisedLearner {
         layers.add(new LayerTanh(inputs));
         break;
       default:
-        throw new NotImplementedException();
+        throw new IllegalArgumentException("No implementation exists for this layer type.");
     }
   }
 
