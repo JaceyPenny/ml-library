@@ -44,11 +44,16 @@ class Main {
 
     // Run a test to show baseline accuracy
     int misclassifications = neuralNetwork.countMisclassifications(testingFeatures, testingLabels);
-    System.out.println(misclassifications);
+    System.out.printf("Before training. Misclassifications: %d\n", misclassifications);
 
     // Measure and report accuracy
     for (int i = 0; i < EPOCHS; i++) {
+      long startTime = System.currentTimeMillis();
       neuralNetwork.train(trainingFeatures, trainingLabels);
+      long endTime = System.currentTimeMillis();
+
+      System.out.printf("Finished training epoch %d: %d ms. Misclassifications: ", i + 1, endTime - startTime);
+
       misclassifications = neuralNetwork.countMisclassifications(testingFeatures, testingLabels);
       System.out.println(misclassifications);
     }
