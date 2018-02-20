@@ -4,6 +4,8 @@
 // ----------------------------------------------------------------
 
 import java.util.Arrays;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Represents a vector of doubles
@@ -67,6 +69,14 @@ public class Vector {
     return list;
   }
 
+  public Vector map(Function<Double, Double> mapper) {
+    Vector newVector = new Vector(size());
+    for (int i = 0; i < size(); i++) {
+      newVector.set(i, mapper.apply(get(i)));
+    }
+    return newVector;
+  }
+
   public int size() {
     return len;
   }
@@ -79,6 +89,12 @@ public class Vector {
     vals[start + index] = value;
   }
 
+  public void fill(Supplier<Double> supplier) {
+    for (int i = 0; i < size(); i++) {
+      set(i, supplier.get());
+    }
+  }
+
   public void fill(double val) {
     for (int i = 0; i < len; i++)
       vals[start + i] = val;
@@ -89,10 +105,10 @@ public class Vector {
     StringBuilder sb = new StringBuilder();
     sb.append('[');
     if (len > 0) {
-      sb.append(String.format("%.3f", vals[start]));
+      sb.append(String.format("%6.3e", vals[start]));
       for (int i = 1; i < len; i++) {
         sb.append(",");
-        sb.append(String.format("%.3f", vals[start + i]));
+        sb.append(String.format("%6.3e", vals[start + i]));
       }
     }
     sb.append(']');
@@ -116,6 +132,18 @@ public class Vector {
       for (int i = 0; i < len; i++)
         vals[i] *= s;
     }
+  }
+
+  public int maxIndex() {
+    int maxIndex = 0;
+    double maxValue = get(0);
+    for (int i = 0; i < size(); i++) {
+      if (get(i) > maxValue) {
+        maxIndex = i;
+        maxValue = get(i);
+      }
+    }
+    return maxIndex;
   }
 
   public void add(Vector that) {
@@ -145,8 +173,9 @@ public class Vector {
   public void addScaled(Vector that, double scalar) {
     if (that.size() != this.size())
       throw new IllegalArgumentException("mismatching sizes");
-    for (int i = 0; i < len; i++)
+    for (int i = 0; i < len; i++) {
       vals[start + i] += scalar * that.get(i);
+    }
   }
 
   public double dotProduct(Vector that) {
@@ -191,7 +220,7 @@ public class Vector {
     Matrix result = new Matrix(a.size(), b.size());
     for (int i = 0; i < a.size(); i++) {
       for (int j = 0; j < b.size(); j++) {
-        result.set(i, j, a.get(i) * a.get(j));
+        result.set(i, j, a.get(i) * b.get(j));
       }
     }
 

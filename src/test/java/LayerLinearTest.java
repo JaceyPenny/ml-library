@@ -29,6 +29,29 @@ public class LayerLinearTest extends BaseTest {
   }
 
   @Test
+  public void backPropagate() {
+    LayerLinear layerLinear = new LayerLinear(3, 2);
+    Vector weightsVector = new Vector(new double[] {1, 2, 3, 2, 1, 0});
+    Matrix weights = Matrix.deserialize(weightsVector, 2, 3);
+    Vector bias = new Vector(new double[] {1, 5});
+    Vector blame = new Vector(new double[] {0.75, 2});
+
+    layerLinear.setWeights(weights);
+    layerLinear.setBias(bias);
+    layerLinear.setBlame(blame);
+
+    Vector expectedPreviousBlame = new Vector(new double[] {4.75, 3.5, 2.25});
+    Vector actualPreviousBlame = layerLinear.backPropagate();
+
+    assertEquals(expectedPreviousBlame, actualPreviousBlame);
+  }
+
+  @Test
+  public void updateGradient() {
+
+  }
+
+  @Test
   public void ordinaryLeastSquares() {
     int data_rows = 100;
     int x_features = 13;
