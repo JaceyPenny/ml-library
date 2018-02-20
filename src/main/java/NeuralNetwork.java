@@ -143,7 +143,7 @@ public class NeuralNetwork extends SupervisedLearner {
 
     for (int i = layers.size() - 1; i >= 1; i--) {
       blame = layers.get(i).backPropagate();
-      layers.get(i-1).setBlame(blame);
+      layers.get(i - 1).setBlame(blame);
     }
   }
 

@@ -131,8 +131,8 @@ public class LayerLinear extends Layer {
   protected Vector backPropagate() {
     Matrix blameMatrix = getBlame().asMatrix(Matrix.VectorType.COLUMN);
 
-    Matrix product = Matrix.multiply(weights, blameMatrix, true, false);
-    return product.serialize();
+    Matrix previousBlameMatrix = Matrix.multiply(weights, blameMatrix, true, false);
+    return previousBlameMatrix.serialize();
   }
 
   @Override
