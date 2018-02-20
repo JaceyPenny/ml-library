@@ -51,8 +51,8 @@ public class LayerLinear extends Layer {
 
   @Override
   void activate(Vector x) {
-    Matrix _xMatrix = new Matrix(x, Matrix.VectorType.ROW);
-    Matrix Mx = Matrix.multiply(_xMatrix, weights, false, true);
+    Matrix xMatrix = x.asMatrix(Matrix.VectorType.COLUMN);
+    Matrix Mx = Matrix.multiply(weights, xMatrix, false, false);
 
     Vector productVector = Mx.serialize();
 

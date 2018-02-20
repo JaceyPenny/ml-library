@@ -57,11 +57,15 @@ public class NeuralNetwork extends SupervisedLearner {
 
   @Override
   void train(Matrix features, Matrix labels) {
+    // TODO Update train methodology
+    
     // add default layers
+    layers.clear();
     addLayer(LayerType.LINEAR, features.cols(), labels.cols());
 
-
-    // TODO Update train methodology
+    if (layers.get(0) instanceof LayerLinear) {
+      ((LayerLinear) layers.get(0)).ordinaryLeastSquares(features, labels);
+    }
   }
 
   @Override
