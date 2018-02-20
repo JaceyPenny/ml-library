@@ -8,6 +8,10 @@ public class NeuralNetwork extends SupervisedLearner {
 
   private List<Layer> layers;
 
+  public NeuralNetwork() {
+    this(0);
+  }
+
   public NeuralNetwork(int inputs) {
     this.inputs = inputs;
     this.layers = new ArrayList<>();
@@ -24,16 +28,10 @@ public class NeuralNetwork extends SupervisedLearner {
     }
   }
 
-  private void addLayer(LayerType layerType, int outputs) {
-    int previousOutputs =
-        (layers.size() == 0) ?
-            inputs :
-            layers.get(layers.size() - 1).getOutputs();
-
-
+  private void addLayer(LayerType layerType, int inputs, int outputs) {
     switch (layerType) {
       case LINEAR:
-        layers.add(new LayerLinear(previousOutputs, outputs));
+        layers.add(new LayerLinear(inputs, outputs));
         break;
       case TANH:
         // TODO Implement Tanh Layer
@@ -43,9 +41,25 @@ public class NeuralNetwork extends SupervisedLearner {
     }
   }
 
+  private void addLayer(LayerType layerType, int outputs) {
+    if (inputs == 0) {
+      throw new IllegalStateException("You must first add a layer with a specified number of inputs");
+    }
+
+    int previousOutputs =
+        (layers.size() == 0) ?
+            inputs :
+            layers.get(layers.size() - 1).getOutputs();
+
+
+    addLayer(layerType, previousOutputs, outputs);
+  }
+
   @Override
   void train(Matrix features, Matrix labels) {
-    checkLayers();
+    // add default layers
+    addLayer(LayerType.LINEAR, features.cols(), labels.cols());
+
 
     // TODO Update train methodology
   }

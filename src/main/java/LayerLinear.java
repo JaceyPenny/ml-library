@@ -19,6 +19,22 @@ public class LayerLinear extends Layer {
     return LayerType.LINEAR;
   }
 
+  public void setWeights(Matrix weights) {
+    this.weights = weights;
+  }
+
+  public Matrix getWeights() {
+    return weights;
+  }
+
+  public void setBias(Vector bias) {
+    this.bias = bias;
+  }
+
+  public Vector getBias() {
+    return bias;
+  }
+
   @Override
   protected void resetGradient() {
     if (weightsGradient == null) {

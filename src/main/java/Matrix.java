@@ -796,6 +796,21 @@ public class Matrix {
     return outputVector;
   }
 
+  public double errorAgainst(Matrix other) {
+    if (rows() != other.rows() || cols() != other.cols()) {
+      throw new IllegalArgumentException("These matrices do not have the same size.");
+    }
+
+    double error = 0;
+    for (int i = 0; i < rows(); i++) {
+      for (int j = 0; j < cols(); j++) {
+        error += Math.abs(get(i, j) - other.get(i, j));
+      }
+    }
+
+    return error;
+  }
+
   private static class SortComparator implements Comparator<double[]> {
     int column;
     boolean ascending;

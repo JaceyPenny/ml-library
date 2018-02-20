@@ -5,7 +5,9 @@
 
 import java.util.Arrays;
 
-/// Represents a vector of doubles
+/**
+ * Represents a vector of doubles
+ */
 public class Vector {
   protected double[] vals;
   protected int start;
@@ -17,7 +19,9 @@ public class Vector {
     return newVector;
   }
 
-  /// Makes an vector of the specified size
+  /**
+   * Makes an vector of the specified size
+   */
   public Vector(int size) {
     if (size == 0)
       vals = null;
@@ -27,7 +31,9 @@ public class Vector {
     len = size;
   }
 
-  /// Wraps the specified array of doubles
+  /**
+   * Wraps the specified array of doubles
+   */
   public Vector(double[] data) {
     vals = data;
     start = 0;
@@ -194,6 +200,19 @@ public class Vector {
 
   public Matrix asMatrix(Matrix.VectorType vectorType) {
     return new Matrix(this, vectorType);
+  }
+
+  public double errorAgainst(Vector other) {
+    if (size() != other.size()) {
+      throw new IllegalArgumentException("These Vectors are not the same size");
+    }
+
+    double error = 0.0;
+    for (int i = 0; i < size(); i++) {
+      error += Math.abs(get(i) - other.get(i));
+    }
+
+    return error;
   }
 
   @Override

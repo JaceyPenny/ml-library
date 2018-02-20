@@ -2,6 +2,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(JUnit4.class)
@@ -10,14 +11,21 @@ public class LayerLinearTest extends BaseTest {
   @Test
   public void activate() {
     Vector x = new Vector(new double[]{0, 1, 2});
-    Vector weights = new Vector(new double[]{1, 5, 1, 2, 3, 2, 1, 0});
+
+    Vector weightsVector = new Vector(new double[]{1, 2, 3, 2, 1, 0});
+    Matrix weights = Matrix.deserialize(weightsVector, 2, 3);
+
+    Vector bias = new Vector(new double[]{1, 5});
 
     LayerLinear layerLinear = new LayerLinear(3, 2);
-    layerLinear.activate(weights, x);
+    layerLinear.setWeights(weights);
+    layerLinear.setBias(bias);
+
+    layerLinear.activate(x);
 
     Vector expectedResult = new Vector(new double[]{9, 6});
 
-    assertTrue(layerLinear.activation.equals(expectedResult));
+    assertEquals(expectedResult,  layerLinear.getActivation());
   }
 
   @Test
@@ -31,28 +39,31 @@ public class LayerLinearTest extends BaseTest {
     Matrix X = getRandomMatrix(data_rows, x_features);
     Matrix Y = new Matrix(data_rows, y_features);
 
-    Vector randomWeights = getRandomVector(y_features + x_features * y_features);
+    Matrix randomWeights = getRandomMatrix(y_features, x_features);
+    Vector randomBias = getRandomVector(y_features);
 
     LayerLinear layerLinear = new LayerLinear(x_features, y_features);
+    layerLinear.setWeights(randomWeights);
+    layerLinear.setBias(randomBias);
 
     for (int i = 0; i < data_rows; i++) {
-      layerLinear.activate(randomWeights, X.row(i));
-      Vector output_y = layerLinear.activation;
+      layerLinear.activate(X.row(i));
+      Vector output_y = layerLinear.getActivation();
       Y.setRow(i, output_y);
     }
 
     addRandomNoiseToMatrix(Y, standardDeviation);
-    Vector newWeights = new Vector(randomWeights.len);
-    layerLinear.ordinaryLeastSquares(X, Y, newWeights);
 
-    double error = 0;
-    for (int i = 0; i < randomWeights.len; i++) {
-      error += Math.abs(randomWeights.get(i) - newWeights.get(i));
-    }
+    layerLinear.ordinaryLeastSquares(X, Y);
 
-    double averageError = error / (double) (x_features * y_features);
+    Matrix newWeights = layerLinear.getWeights();
+    Vector newBias = layerLinear.getBias();
 
-    System.out.println(averageError);
+    double error = randomWeights.errorAgainst(newWeights);
+    error += randomBias.errorAgainst(newBias);
+
+    double averageError = error / (double) (x_features * y_features + y_features);
+
     assertTrue(averageError < standardDeviation);
   }
 }
