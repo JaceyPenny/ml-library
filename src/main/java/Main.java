@@ -11,7 +11,7 @@ class Main {
     Matrix labels = Matrix.fromARFF("data/housing_labels.arff");
 
     NeuralNetwork neuralNetwork = new NeuralNetwork();
-    neuralNetwork.addLayer(LayerType.LINEAR, features.cols(), labels.cols());
+    neuralNetwork.addFirstLayer(LayerType.LINEAR, features.cols(), labels.cols());
 
     double finalError = neuralNetwork.crossValidation(10, 5, features, labels);
     System.out.println(finalError);
@@ -20,7 +20,7 @@ class Main {
   private static void runAssignment2() {
     NeuralNetwork neuralNetwork = new NeuralNetwork();
 
-    neuralNetwork.addLayer(LayerType.LINEAR, 784, 80);
+    neuralNetwork.addFirstLayer(LayerType.LINEAR, 784, 80);
     neuralNetwork.addLayer(LayerType.TANH, 80);
     neuralNetwork.addLayer(LayerType.LINEAR, 30);
     neuralNetwork.addLayer(LayerType.TANH, 30);
