@@ -61,6 +61,37 @@ public class NeuralNetwork extends SupervisedLearner {
   }
 
   @Override
+  double crossValidation(int folds, int repetitions, Matrix features, Matrix labels) {
+    if (layers.size() != 1 || layers.get(0).getLayerType() != LayerType.LINEAR) {
+      throw new IllegalStateException("Your NeuralNetwork must have exactly one LayerLinear");
+    }
+
+    int dataRows = features.rows();
+    int[] foldSizes = Matrix.computeFoldSizes(dataRows, folds);
+
+    double totalError = 0;
+
+    for (int r = 0; r < repetitions; r++) {
+      shuffleData(features, labels);
+
+      for (int i = 0; i < folds; i++) {
+        Matrix X = Matrix.matrixWithoutFold(foldSizes, i, features);
+        Matrix Y = Matrix.matrixWithoutFold(foldSizes, i, labels);
+
+        Matrix test_X = Matrix.matrixFold(foldSizes, i, features);
+        Matrix expected_Y = Matrix.matrixFold(foldSizes, i, labels);
+
+        trainLinear(X, Y);
+
+        double sumSquaredError = computeSumSquaredError(test_X, expected_Y);
+        totalError += sumSquaredError;
+      }
+    }
+
+    return Math.sqrt(totalError / repetitions / features.rows());
+  }
+
+  @Override
   int countMisclassifications(Matrix features, Matrix labels) {
     int misclassifications = 0;
 
@@ -74,6 +105,15 @@ public class NeuralNetwork extends SupervisedLearner {
     }
 
     return misclassifications;
+  }
+
+  private void trainLinear(Matrix features, Matrix labels) {
+    if (layers.size() != 1 || layers.get(0).getLayerType() != LayerType.LINEAR) {
+      throw new IllegalStateException("Your NeuralNetwork must have exactly one LayerLinear");
+    }
+
+    LayerLinear layer = (LayerLinear) layers.get(0);
+    layer.ordinaryLeastSquares(features, labels);
   }
 
   @Override
