@@ -6,16 +6,9 @@ public class NeuralNetwork extends SupervisedLearner {
   public static Random RANDOM = new Random();
   public static double LEARNING_RATE = 0.03;
 
-  private int inputs;
-
   private List<Layer> layers;
 
   public NeuralNetwork() {
-    this(0);
-  }
-
-  public NeuralNetwork(int inputs) {
-    this.inputs = inputs;
     this.layers = new ArrayList<>();
   }
 
@@ -30,9 +23,12 @@ public class NeuralNetwork extends SupervisedLearner {
     }
   }
 
-  public void addLayer(LayerType layerType, int inputs, int outputs) {
-    this.inputs = inputs;
+  public void addFirstLayer(LayerType layerType, int inputs, int outputs) {
+    this.layers.clear();
+    addLayer(layerType, inputs, outputs);
+  }
 
+  private void addLayer(LayerType layerType, int inputs, int outputs) {
     switch (layerType) {
       case LINEAR:
         layers.add(new LayerLinear(inputs, outputs));
@@ -46,14 +42,11 @@ public class NeuralNetwork extends SupervisedLearner {
   }
 
   public void addLayer(LayerType layerType, int outputs) {
-    if (inputs == 0) {
+    if (layers.isEmpty()) {
       throw new IllegalStateException("You must first add a layer with a specified number of inputs");
     }
 
-    int previousOutputs =
-        (layers.size() == 0) ?
-            inputs :
-            layers.get(layers.size() - 1).getOutputs();
+    int previousOutputs = layers.get(layers.size() - 1).getOutputs();
 
 
     addLayer(layerType, previousOutputs, outputs);
@@ -175,7 +168,7 @@ public class NeuralNetwork extends SupervisedLearner {
   private void backPropagate(Vector target) {
     checkLayers();
 
-    Vector blame = Vector.copy(target);
+    Vector blame = target.copy();
     blame.addScaled(layers.get(layers.size() - 1).getActivation(), -1);
     layers.get(layers.size() - 1).setBlame(blame);
 

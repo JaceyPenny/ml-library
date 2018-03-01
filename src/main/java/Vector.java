@@ -77,6 +77,10 @@ public class Vector {
     return newVector;
   }
 
+  public Vector copy() {
+    return Vector.copy(this);
+  }
+
   public int size() {
     return len;
   }
