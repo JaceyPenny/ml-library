@@ -7,7 +7,7 @@ class Main {
   public static int EPOCHS = 10;
 
   static void test(NeuralNetwork neuralNetwork) {
-    neuralNetwork.addLayer(LayerType.LINEAR, 784, 80);
+    neuralNetwork.addFirstLayer(LayerType.LINEAR, 784, 80);
     neuralNetwork.addLayer(LayerType.TANH, 80);
     neuralNetwork.addLayer(LayerType.LINEAR, 30);
     neuralNetwork.addLayer(LayerType.TANH, 30);
