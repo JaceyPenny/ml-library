@@ -454,11 +454,9 @@ public class Matrix {
 
   public Vector column(int index) {
     Vector column = new Vector(rows());
-
     for (int i = 0; i < rows(); i++) {
       column.set(i, row(i).get(index));
     }
-
     return column;
   }
 
@@ -547,9 +545,7 @@ public class Matrix {
     for (double[] list : data) {
       double val = list[col];
       if (val != UNKNOWN_VALUE) {
-        Integer result = counts.get(val);
-        if (result == null) result = 0;
-
+        int result = counts.getOrDefault(val, 0);
         counts.put(val, result + 1);
       }
     }
@@ -569,11 +565,19 @@ public class Matrix {
   /**
    * Copies the specified rectangular portion of that matrix, and puts it in the specified location in this matrix.
    */
-  public void copyBlock(int destRow, int destCol, Matrix that, int rowBegin, int colBegin, int rowCount, int colCount) {
-    if (destRow + rowCount > this.rows() || destCol + colCount > this.cols())
+  public void copyBlock(
+      int destRow,
+      int destCol,
+      Matrix that,
+      int rowBegin,
+      int colBegin,
+      int rowCount,
+      int colCount) {
+    if (destRow + rowCount > this.rows() || destCol + colCount > this.cols()) {
       throw new IllegalArgumentException("Out of range for destination matrix.");
-    if (rowBegin + rowCount > that.rows() || colBegin + colCount > that.cols())
+    } else if (rowBegin + rowCount > that.rows() || colBegin + colCount > that.cols()) {
       throw new IllegalArgumentException("Out of range for source matrix.");
+    }
 
     // Copy the specified region of meta-data
     for (int i = 0; i < colCount; i++) {
@@ -594,6 +598,9 @@ public class Matrix {
     return result;
   }
 
+  /**
+   * Returns a new matrix with just the rows between [rowStart, rowEnd)
+   */
   public Matrix duplicateRows(int rowStart, int rowEnd) {
     Matrix result = new Matrix(rowEnd - rowStart, this.cols());
     result.copyBlock(0, 0, this, rowStart, 0, rowEnd - rowStart, this.cols());
@@ -784,7 +791,7 @@ public class Matrix {
     data.sort(new SortComparator(column, ascending));
   }
 
-  double Matrix_pythag(double a, double b) {
+  double pythag(double a, double b) {
     double at = Math.abs(a);
     double bt = Math.abs(b);
     if (at > bt) {
@@ -797,7 +804,7 @@ public class Matrix {
       return 0.0;
   }
 
-  double Matrix_safeDivide(double n, double d) {
+  double safeDivide(double n, double d) {
     if (d == 0.0 && n == 0.0)
       return 0.0;
     else {
@@ -807,7 +814,7 @@ public class Matrix {
     }
   }
 
-  double Matrix_takeSign(double a, double b) {
+  double takeSign(double a, double b) {
     return (b >= 0.0 ? Math.abs(a) : -Math.abs(a));
   }
 
@@ -909,13 +916,14 @@ public class Matrix {
   class SVDResult {
     Matrix u;
     Matrix v;
-    double[] diag;
+    double[] diagonal;
   }
 
   /**
    * Performs singular value decomposition of this matrix
    */
-  SVDResult singularValueDecompositionHelper(boolean throwIfNoConverge, int maxIters) {
+  @SuppressWarnings("ConstantConditions")
+  private SVDResult singularValueDecompositionHelper(boolean throwIfNoConverge, int maxIterations) {
     int m = rows();
     int n = cols();
     if (m < n)
@@ -938,7 +946,7 @@ public class Matrix {
         rOut[j] = rIn[j];
     }
     double[] pSigma = new double[n];
-    res.diag = pSigma;
+    res.diagonal = pSigma;
     Matrix pV = new Matrix(n, n);
     res.v = pV;
     pV.fill(0.0);
@@ -957,12 +965,12 @@ public class Matrix {
           scale += Math.abs(pU.data.get(k)[i]);
         if (scale != 0.0) {
           for (k = i; k < m; k++) {
-            pU.data.get(k)[i] = Matrix_safeDivide(pU.data.get(k)[i], scale);
+            pU.data.get(k)[i] = safeDivide(pU.data.get(k)[i], scale);
             double t = pU.data.get(k)[i];
             s += t * t;
           }
           f = pU.data.get(i)[i];
-          g = -Matrix_takeSign(Math.sqrt(s), f);
+          g = -takeSign(Math.sqrt(s), f);
           h = f * g - s;
           pU.data.get(i)[i] = f - g;
           if (i != n - 1) {
@@ -970,7 +978,7 @@ public class Matrix {
               s = 0.0;
               for (k = i; k < m; k++)
                 s += pU.data.get(k)[i] * pU.data.get(k)[j];
-              f = Matrix_safeDivide(s, h);
+              f = safeDivide(s, h);
               for (k = i; k < m; k++)
                 pU.data.get(k)[j] += f * pU.data.get(k)[i];
             }
@@ -990,16 +998,16 @@ public class Matrix {
           scale += Math.abs(pU.data.get(i)[k]);
         if (scale != 0.0) {
           for (k = l; k < n; k++) {
-            pU.data.get(i)[k] = Matrix_safeDivide(pU.data.get(i)[k], scale);
+            pU.data.get(i)[k] = safeDivide(pU.data.get(i)[k], scale);
             double t = pU.data.get(i)[k];
             s += t * t;
           }
           f = pU.data.get(i)[l];
-          g = -Matrix_takeSign(Math.sqrt(s), f);
+          g = -takeSign(Math.sqrt(s), f);
           h = f * g - s;
           pU.data.get(i)[l] = f - g;
           for (k = l; k < n; k++)
-            temp[k] = Matrix_safeDivide(pU.data.get(i)[k], h);
+            temp[k] = safeDivide(pU.data.get(i)[k], h);
           if (i != m - 1) {
             for (j = l; j < m; j++) {
               s = 0.0;
@@ -1021,7 +1029,7 @@ public class Matrix {
       if (i < n - 1) {
         if (g != 0.0) {
           for (j = l; j < n; j++)
-            pV.data.get(i)[j] = Matrix_safeDivide(Matrix_safeDivide(pU.data.get(i)[j], pU.data.get(i)[l]), g); // (double-division to avoid underflow)
+            pV.data.get(i)[j] = safeDivide(safeDivide(pU.data.get(i)[j], pU.data.get(i)[l]), g); // (double-division to avoid underflow)
           for (j = l; j < n; j++) {
             s = 0.0;
             for (k = l; k < n; k++)
@@ -1049,13 +1057,13 @@ public class Matrix {
           pU.data.get(i)[j] = 0.0;
       }
       if (g != 0.0) {
-        g = Matrix_safeDivide(1.0, g);
+        g = safeDivide(1.0, g);
         if (i != n - 1) {
           for (j = l; j < n; j++) {
             s = 0.0;
             for (k = l; k < m; k++)
               s += pU.data.get(k)[i] * pU.data.get(k)[j];
-            f = Matrix_safeDivide(s, pU.data.get(i)[i]) * g;
+            f = safeDivide(s, pU.data.get(i)[i]) * g;
             for (k = i; k < m; k++)
               pU.data.get(k)[j] += f * pU.data.get(k)[i];
           }
@@ -1072,7 +1080,7 @@ public class Matrix {
     // Diagonalize the bidiagonal matrix
     for (k = n - 1; k >= 0; k--) // For each singular value
     {
-      for (int iter = 1; iter <= maxIters; iter++) {
+      for (int iteration = 1; iteration <= maxIterations; iteration++) {
         // Test for splitting
         boolean flag = true;
         q = 0;
@@ -1095,9 +1103,9 @@ public class Matrix {
             if (Math.abs(f) + norm == norm)
               break;
             g = pSigma[i];
-            h = Matrix_pythag(f, g);
+            h = pythag(f, g);
             pSigma[i] = h;
-            h = Matrix_safeDivide(1.0, h);
+            h = safeDivide(1.0, h);
             c = g * h;
             s = -f * h;
             for (j = 0; j < m; j++) {
@@ -1120,7 +1128,7 @@ public class Matrix {
           }
           break;
         }
-        if (throwIfNoConverge && iter >= maxIters)
+        if (throwIfNoConverge && iteration >= maxIterations)
           throw new IllegalArgumentException("failed to converge");
 
         // Shift from bottom 2x2 minor
@@ -1129,9 +1137,9 @@ public class Matrix {
         y = pSigma[q];
         g = temp[q];
         h = temp[k];
-        f = Matrix_safeDivide(((y - z) * (y + z) + (g - h) * (g + h)), (2.0 * h * y));
-        g = Matrix_pythag(f, 1.0);
-        f = Matrix_safeDivide(((x - z) * (x + z) + h * (Matrix_safeDivide(y, (f + Matrix_takeSign(g, f))) - h)), x);
+        f = safeDivide(((y - z) * (y + z) + (g - h) * (g + h)), (2.0 * h * y));
+        g = pythag(f, 1.0);
+        f = safeDivide(((x - z) * (x + z) + h * (safeDivide(y, (f + takeSign(g, f))) - h)), x);
 
         // QR transform
         c = 1.0;
@@ -1142,10 +1150,10 @@ public class Matrix {
           y = pSigma[i];
           h = s * g;
           g = c * g;
-          z = Matrix_pythag(f, h);
+          z = pythag(f, h);
           temp[j] = z;
-          c = Matrix_safeDivide(f, z);
-          s = Matrix_safeDivide(h, z);
+          c = safeDivide(f, z);
+          s = safeDivide(h, z);
           f = x * c + g * s;
           g = g * c - x * s;
           h = y * s;
@@ -1156,10 +1164,10 @@ public class Matrix {
             pV.data.get(j)[p] = x * c + z * s;
             pV.data.get(i)[p] = z * c - x * s;
           }
-          z = Matrix_pythag(f, h);
+          z = pythag(f, h);
           pSigma[j] = z;
           if (z != 0.0) {
-            z = Matrix_safeDivide(1.0, z);
+            z = safeDivide(1.0, z);
             c = f * z;
             s = h * z;
           }
@@ -1201,44 +1209,49 @@ public class Matrix {
    * Returns the Moore-Penrose pseudoinverse of this matrix
    */
   Matrix pseudoInverse() {
-    SVDResult res;
-    int colCount = cols();
-    int rowCount = rows();
-    if (rowCount < colCount) {
+    SVDResult result;
+    int columns = cols();
+    int rows = rows();
+    if (rows < columns) {
       Matrix pTranspose = transpose();
-      res = pTranspose.singularValueDecompositionHelper(false, 80);
-    } else
-      res = singularValueDecompositionHelper(false, 80);
-    Matrix sigma = new Matrix(rowCount < colCount ? colCount : rowCount, rowCount < colCount ? rowCount : colCount);
-    sigma.fill(0.0);
-    int m = Math.min(rowCount, colCount);
-    for (int i = 0; i < m; i++) {
-      if (Math.abs(res.diag[i]) > 1e-9)
-        sigma.data.get(i)[i] = Matrix_safeDivide(1.0, res.diag[i]);
-      else
-        sigma.data.get(i)[i] = 0.0;
+      result = pTranspose.singularValueDecompositionHelper(false, 80);
+    } else {
+      result = singularValueDecompositionHelper(false, 80);
     }
-    Matrix pT = Matrix.multiply(res.u, sigma, false, false);
-    if (rowCount < colCount)
-      return Matrix.multiply(pT, res.v, false, false);
-    else
-      return Matrix.multiply(res.v, pT, true, true);
+
+    Matrix sigma = new Matrix(rows < columns ? columns : rows, rows < columns ? rows : columns);
+    sigma.fill(0.0);
+    int m = Math.min(rows, columns);
+    for (int i = 0; i < m; i++) {
+      if (Math.abs(result.diagonal[i]) > 1e-9) {
+        sigma.data.get(i)[i] = safeDivide(1.0, result.diagonal[i]);
+      } else {
+        sigma.data.get(i)[i] = 0.0;
+      }
+    }
+
+    Matrix pT = Matrix.multiply(result.u, sigma, false, false);
+    if (rows < columns) {
+      return Matrix.multiply(pT, result.v, false, false);
+    } else {
+      return Matrix.multiply(result.v, pT, true, true);
+    }
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof Matrix)) {
+  public boolean equals(Object object) {
+    if (!(object instanceof Matrix)) {
       return false;
     }
 
-    Matrix other = (Matrix) obj;
+    Matrix other = (Matrix) object;
     if (other.rows() != rows() || other.cols() != cols()) {
       return false;
     }
 
-    for (int r = 0; r < rows(); r++) {
-      for (int c = 0; c < cols(); c++) {
-        if (get(r, c) != get(r, c)) {
+    for (int row = 0; row < rows(); row++) {
+      for (int column = 0; column < cols(); column++) {
+        if (get(row, column) != get(row, column)) {
           return false;
         }
       }

@@ -25,12 +25,7 @@ public class Vector {
    * Makes an vector of the specified size
    */
   public Vector(int size) {
-    if (size == 0) {
-      values = null;
-    } else {
-      values = new double[size];
-    }
-
+    values = new double[size];
     startIndex = 0;
     length = size;
   }
@@ -67,8 +62,8 @@ public class Vector {
 
   public Json marshal() {
     Json list = Json.newList();
-    for (int i = 0; i < length; i++) {
-      list.add(values[startIndex + i]);
+    for (int i = 0; i < size(); i++) {
+      list.add(get(i));
     }
     return list;
   }
@@ -103,9 +98,9 @@ public class Vector {
     }
   }
 
-  public void fill(double val) {
+  public void fill(double value) {
     for (int i = 0; i < length; i++) {
-      values[startIndex + i] = val;
+      set(i, value);
     }
   }
 
