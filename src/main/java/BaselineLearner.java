@@ -13,7 +13,7 @@ class BaselineLearner extends SupervisedLearner {
   void train(Matrix features, Matrix labels) {
     mode = new double[labels.cols()];
     for (int i = 0; i < labels.cols(); i++) {
-      if (labels.valueCount(i) == 0)
+      if (labels.getMetadata().attributeIsContinuous(i))
         mode[i] = labels.columnMean(i);
       else
         mode[i] = labels.mostCommonValue(i);

@@ -5,63 +5,48 @@
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.function.Supplier;
 
-
-/// This stores a matrix, A.K.A. data set, A.K.A. table. Each element is
-/// represented as a double value. Nominal values are represented using their
-/// corresponding zero-indexed enumeration value. For convenience,
-/// the matrix also stores some meta-data which describes the columns (or attributes)
-/// in the matrix.
+/**
+ * This stores a matrix, A.K.A. data set, A.K.A. table. Each element is
+ * represented as a double value. Nominal values are represented using their
+ * corresponding zero-indexed enumeration value. For convenience,
+ * the matrix also stores some meta-data which describes the columns (or attributes)
+ * in the matrix.
+ */
 public class Matrix {
   public enum VectorType {
     ROW, COLUMN
   }
 
-  /// Used to represent elements in the matrix for which the value is not known.
+  /**
+   * Used to represent elements in the matrix for which the value is not known.
+   */
   public static final double UNKNOWN_VALUE = -1e308;
 
-  // Data
-  private ArrayList<double[]> m_data = new ArrayList<>(); //matrix elements
+  private ArrayList<double[]> data = new ArrayList<>(); //matrix elements
+  private Metadata metadata;
 
-  // Meta-data
-  private String m_filename;                          // the name of the file
-  private ArrayList<String> m_attr_name;                 // the name of each attribute (or column)
-  private ArrayList<HashMap<String, Integer>> m_str_to_enum; // value to enumeration
-  private ArrayList<HashMap<Integer, String>> m_enum_to_str; // enumeration to value
-
-
-  /// Creates a 0x0 matrix. (Next, to give this matrix some dimensions, you should call:
-  ///    loadARFF
-  ///    setSize
-  ///    newColumn, or
-  ///    copyMetaData
-  @SuppressWarnings("unchecked")
+  /**
+   * Creates a 0x0 matrix. (Next, to give this matrix some dimensions, you should call:
+   * loadARFF
+   * setSize
+   * newColumn, or
+   * copyMetaData
+   */
   public Matrix() {
-    this.m_filename = "";
-    this.m_attr_name = new ArrayList<>();
-    this.m_str_to_enum = new ArrayList<>();
-    this.m_enum_to_str = new ArrayList<>();
+    metadata = new Metadata();
   }
 
-
   public Matrix(int rows, int cols) {
-    this.m_filename = "";
-    this.m_attr_name = new ArrayList<>();
-    this.m_str_to_enum = new ArrayList<>();
-    this.m_enum_to_str = new ArrayList<>();
+    this();
     setSize(rows, cols);
   }
 
-
   public Matrix(Matrix that) {
-    m_filename = that.m_filename;
-    m_attr_name = new ArrayList<>();
-    m_str_to_enum = new ArrayList<>();
-    m_enum_to_str = new ArrayList<>();
+    metadata = new Metadata(that.getMetadata().getFileName());
     setSize(that.rows(), that.cols());
     copyBlock(0, 0, that, 0, 0, that.rows(), that.cols()); // (copies the meta data too)
   }
@@ -77,391 +62,311 @@ public class Matrix {
   }
 
 
-  public Matrix(Json n) {
-    int rowCount = n.size();
-    int colCount = n.get(0).size();
-    this.m_filename = "";
-    this.m_attr_name = new ArrayList<>();
-    this.m_str_to_enum = new ArrayList<>();
-    this.m_enum_to_str = new ArrayList<>();
+  public Matrix(Json json) {
+    int rowCount = json.size();
+    int colCount = json.get(0).size();
+    metadata = new Metadata();
     setSize(rowCount, colCount);
     for (int i = 0; i < rowCount; i++) {
-      double[] mrow = m_data.get(i);
-      Json jrow = n.get(i);
+      Json jsonRow = json.get(i);
+      double[] row = data.get(i);
       for (int j = 0; j < colCount; j++) {
-        mrow[j] = jrow.getDouble(j);
+        row[j] = jsonRow.getDouble(j);
       }
     }
   }
 
 
-  /// Marshals this object into a Json DOM
+  /**
+   * Marshals this object into a Json DOM
+   */
   public Json marshal() {
-    Json list = Json.newList();
+    Json jsonList = Json.newList();
     for (int i = 0; i < rows(); i++) {
-      double[] r = m_data.get(i);
-      Json list2 = Json.newList();
-      for (int j = 0; j < r.length; j++)
-        list2.add(r[j]);
-      list.add(list2);
+      double[] row = data.get(i);
+      Json jsonRow = Json.newList();
+
+      for (double value : row) {
+        jsonRow.add(value);
+      }
+
+      jsonList.add(jsonRow);
     }
-    return list;
+
+    return jsonList;
   }
 
-  public static Matrix fromARFF(String filename) {
+  public static Matrix fromARFF(String fileName) {
     Matrix matrix = new Matrix();
-    matrix.loadARFF(filename);
+    matrix.loadARFF(fileName);
     return matrix;
   }
 
-  /// Loads the matrix from an ARFF file
-  public void loadARFF(String filename) {
-    int attrCount = 0; // Count number of attributes
-    int lineNum = 0; // Used for exception messages
-    Scanner s = null;
-    m_str_to_enum.clear();
-    m_enum_to_str.clear();
-    m_attr_name.clear();
+  /**
+   * Loads the matrix from an ARFF file
+   */
+  public void loadARFF(String fileName) {
+    int attributeCount = 0;
+    Scanner scanner = null;
+    metadata.clear();
 
     try {
-      s = new Scanner(new File(filename));
-      while (s.hasNextLine()) {
-        lineNum++;
-        String line = s.nextLine().trim();
+      scanner = new Scanner(new File(fileName));
+      while (scanner.hasNextLine()) {
+        String line = scanner.nextLine().trim();
         String upper = line.toUpperCase();
 
-        if (upper.startsWith("@RELATION"))
-          m_filename = line.split(" ")[1];
-        else if (upper.startsWith("@ATTRIBUTE")) {
-          HashMap<String, Integer> str_to_enum = new HashMap<String, Integer>();
-          HashMap<Integer, String> enum_to_str = new HashMap<Integer, String>();
-          m_str_to_enum.add(str_to_enum);
-          m_enum_to_str.add(enum_to_str);
-
-          Json.StringParser sp = new Json.StringParser(line);
-          sp.advance(10);
-          sp.skipWhitespace();
-          String attrName = sp.untilWhitespace();
-          m_attr_name.add(attrName);
-          sp.skipWhitespace();
-          int valCount = 0;
-          if (sp.peek() == '{') {
-            sp.advance(1);
-            while (sp.peek() != '}') {
-              sp.skipWhitespace();
-              String attrVal = sp.untilQuoteSensitive(',', '}');
-              if (sp.peek() == ',')
-                sp.advance(1);
-              if (str_to_enum.containsKey(attrVal))
-                throw new RuntimeException("Duplicate attribute value: " + attrVal);
-              str_to_enum.put(attrVal, valCount);
-              enum_to_str.put(valCount, attrVal);
-              valCount++;
-            }
-            sp.advance(1);
-          }
-          attrCount++;
+        if (upper.startsWith("@RELATION")) {
+          String parsedFileName = line.split(" ")[1];
+          metadata.setFileName(parsedFileName);
+        } else if (upper.startsWith("@ATTRIBUTE")) {
+          metadata.parseAttribute(line);
+          attributeCount++;
         } else if (upper.startsWith("@DATA")) {
-          m_data.clear();
+          data.clear();
 
-          while (s.hasNextLine()) {
-            lineNum++;
-            line = s.nextLine().trim();
-            if (line.startsWith("%") || line.isEmpty())
+          while (scanner.hasNextLine()) {
+            line = scanner.nextLine().trim();
+            if (line.startsWith("%") || line.isEmpty()) {
               continue;
-            double[] row = new double[attrCount];
-            m_data.add(row);
-            Json.StringParser sp = new Json.StringParser(line);
-            for (int i = 0; i < attrCount; i++) {
-              sp.skipWhitespace();
-              String val = sp.untilQuoteSensitive(',', '\n');
+            }
 
-              int valueCount = m_enum_to_str.get(i).size();
-              if (val.equals("?")) // Unknown values are always set to UNKNOWN_VALUE
-              {
+            double[] row = new double[attributeCount];
+            data.add(row);
+
+            Json.StringParser stringParser = new Json.StringParser(line);
+            for (int i = 0; i < attributeCount; i++) {
+              stringParser.skipWhitespace();
+              String parsedValue = stringParser.untilQuoteSensitive(',', '\n');
+
+              boolean attributeIsContinuous = metadata.attributeIsContinuous(i);
+              if (parsedValue.equals("?")) { // Unknown values are always set to UNKNOWN_VALUE
                 row[i] = UNKNOWN_VALUE;
-              } else if (valueCount > 0) // if it's nominal
-              {
-                HashMap<String, Integer> enumMap = m_str_to_enum.get(i);
-                if (!enumMap.containsKey(val)) {
-                  throw new IllegalArgumentException("Unrecognized enumeration value " + val + " on line: " + lineNum + ".");
-                }
+              } else if (!attributeIsContinuous) { // if it's nominal
+                row[i] = metadata.getValueForAttributeInColumn(parsedValue, i);
+              } else { // else it's continuous
+                row[i] = Double.parseDouble(parsedValue); // The attribute is continuous
+              }
 
-                row[i] = (double) enumMap.get(val);
-              } else // else it's continuous
-                row[i] = Double.parseDouble(val); // The attribute is continuous
-
-              sp.advance(1);
+              stringParser.advance(1);
             }
           }
         }
       }
     } catch (FileNotFoundException e) {
-      throw new IllegalArgumentException("Failed to open file: " + filename + ".");
+      throw new IllegalArgumentException("Failed to open file: " + fileName + ".");
     } finally {
-      if (s != null) {
-        s.close();
+      if (scanner != null) {
+        scanner.close();
       }
     }
   }
 
-
-  /// Returns a string representation of this object
-//  public String toString() {
-//    StringBuilder sb = new StringBuilder();
-//    for (int j = 0; j < rows(); j++) {
-//      if (j > 0)
-//        sb.append("\n");
-//      sb.append(row(j).toString());
-//    }
-//    return sb.toString();
-//  }
-  // TODO
+  public Metadata getMetadata() {
+    return metadata;
+  }
 
 
-  public void printRow(double[] row, PrintStream os) {
-    if (row.length != cols())
+  public void printRow(double[] row, PrintWriter outputStream) {
+    if (row.length != cols()) {
       throw new RuntimeException("Unexpected row size");
+    }
+
     for (int j = 0; j < row.length; j++) {
-      if (row[j] == UNKNOWN_VALUE)
-        os.print("?");
-      else {
-        int vals = valueCount(j);
-        if (vals == 0) {
-          if (Math.floor(row[j]) == row[j])
-            os.print((int) Math.floor(row[j]));
-          else
-            os.print(row[j]);
+      if (row[j] == UNKNOWN_VALUE) {
+        outputStream.print("?");
+      } else {
+        int valueCount = metadata.getEnumSizeForAttributeInColumn(j);
+        if (valueCount == 0) {
+          if (Math.floor(row[j]) == row[j]) {
+            outputStream.print((int) Math.floor(row[j]));
+          } else {
+            outputStream.print(row[j]);
+          }
         } else {
-          int val = (int) row[j];
-          if (val >= vals)
+          int value = (int) row[j];
+          if (value >= valueCount) {
             throw new IllegalArgumentException("Value out of range.");
-          os.print(attrValue(j, val));
+          }
+
+          outputStream.print(metadata.getAttributeForValueInColumn(value, j));
         }
       }
 
-      if (j + 1 < cols())
-        os.print(",");
-    }
-  }
-
-
-  public void printRow(double[] row, PrintWriter os) {
-    if (row.length != cols())
-      throw new RuntimeException("Unexpected row size");
-    for (int j = 0; j < row.length; j++) {
-      if (row[j] == UNKNOWN_VALUE)
-        os.print("?");
-      else {
-        int vals = valueCount(j);
-        if (vals == 0) {
-          if (Math.floor(row[j]) == row[j])
-            os.print((int) Math.floor(row[j]));
-          else
-            os.print(row[j]);
-        } else {
-          int val = (int) row[j];
-          if (val >= vals)
-            throw new IllegalArgumentException("Value out of range.");
-          os.print(attrValue(j, val));
-        }
+      if (j + 1 < cols()) {
+        outputStream.print(",");
       }
-
-      if (j + 1 < cols())
-        os.print(",");
     }
   }
 
-
-  /// Saves the matrix to an ARFF file
+  /**
+   * Saves the matrix to an ARFF file
+   */
   public void saveARFF(String filename) {
-    PrintWriter os = null;
+    PrintWriter outputStream = null;
 
     try {
-      os = new PrintWriter(filename);
+      outputStream = new PrintWriter(filename);
       // Print the relation name, if one has been provided ('x' is default)
-      os.print("@RELATION ");
-      os.println(m_filename.isEmpty() ? "x" : m_filename);
+      outputStream.print("@RELATION ");
+      outputStream.println(metadata.getFileName().isEmpty() ? "x" : metadata.getFileName());
 
       // Print each attribute in order
-      for (int i = 0; i < m_attr_name.size(); i++) {
-        os.print("@ATTRIBUTE ");
+      for (int i = 0; i < metadata.getAttributeNames().size(); i++) {
+        outputStream.print("@ATTRIBUTE ");
 
-        String attributeName = m_attr_name.get(i);
-        os.print(attributeName.isEmpty() ? "x" : attributeName);
+        String attributeName = metadata.getAttributeNames().get(i);
+        outputStream.print(attributeName.isEmpty() ? "x" : attributeName);
 
-        int vals = valueCount(i);
+        if (metadata.attributeIsContinuous(i)) {
+          outputStream.println(" REAL");
+        } else {
+          int values = metadata.getEnumSizeForAttributeInColumn(i);
 
-        if (vals == 0) os.println(" REAL");
-        else {
-          os.print(" {");
-          for (int j = 0; j < vals; j++) {
-            os.print(attrValue(i, j));
-            if (j + 1 < vals) os.print(",");
+          outputStream.print(" {");
+          for (int j = 0; j < values; j++) {
+            outputStream.print(metadata.getAttributeForValueInColumn(j, i));
+            if (j + 1 < values) {
+              outputStream.print(",");
+            }
           }
-          os.println("}");
+          outputStream.println("}");
         }
       }
 
       // Print the data
-      os.println("@DATA");
+      outputStream.println("@DATA");
       for (int i = 0; i < rows(); i++) {
-        double[] row = m_data.get(i);
-        printRow(row, os);
-        os.println();
+        double[] row = data.get(i);
+        printRow(row, outputStream);
+        outputStream.println();
       }
     } catch (FileNotFoundException e) {
       throw new IllegalArgumentException("Error creating file: " + filename + ".");
     } finally {
-      os.close();
+      if (outputStream != null) {
+        outputStream.close();
+      }
     }
   }
 
-  /// Makes a rows-by-columns matrix of *ALL CONTINUOUS VALUES*.
-  /// This method wipes out any data currently in the matrix. It also
-  /// wipes out any meta-data.
+  /**
+   * Makes a rows-by-columns matrix of *ALL CONTINUOUS VALUES*.
+   * This method wipes out any data currently in the matrix. It also
+   * wipes out any meta-data.
+   */
   public void setSize(int rows, int cols) {
-    m_data.clear();
+    data.clear();
 
     // Set the meta-data
-    m_filename = "";
-    m_attr_name.clear();
-    m_str_to_enum.clear();
-    m_enum_to_str.clear();
+    metadata.clear();
 
     // Make space for each of the columns, then each of the rows
     newColumns(cols);
     newRows(rows);
   }
 
-  /// Clears this matrix and copies the meta-data from that matrix.
-  /// In other words, it makes a zero-row matrix with the same number
-  /// of columns as "that" matrix. You will need to call newRow or newRows
-  /// to give the matrix some rows.
-  @SuppressWarnings("unchecked")
+  /**
+   * Clears this matrix and copies the meta-data from that matrix.
+   * In other words, it makes a zero-row matrix with the same number
+   * of columns as "that" matrix. You will need to call newRow or newRows
+   * to give the matrix some rows.
+   */
   public void copyMetaData(Matrix that) {
-    m_data.clear();
-    m_attr_name = new ArrayList<String>(that.m_attr_name);
-
-    // Make a deep copy of that.m_str_to_enum
-    m_str_to_enum = new ArrayList<HashMap<String, Integer>>();
-    for (HashMap<String, Integer> map : that.m_str_to_enum) {
-      HashMap<String, Integer> temp = new HashMap<String, Integer>();
-      for (Map.Entry<String, Integer> entry : map.entrySet())
-        temp.put(entry.getKey(), entry.getValue());
-
-      m_str_to_enum.add(temp);
-    }
-
-    // Make a deep copy of that.m_enum_to_string
-    m_enum_to_str = new ArrayList<HashMap<Integer, String>>();
-    for (HashMap<Integer, String> map : that.m_enum_to_str) {
-      HashMap<Integer, String> temp = new HashMap<Integer, String>();
-      for (Map.Entry<Integer, String> entry : map.entrySet())
-        temp.put(entry.getKey(), entry.getValue());
-
-      m_enum_to_str.add(temp);
-    }
+    data.clear();
+    metadata = that.getMetadata().copy();
   }
 
-
-  /// Adds a column with the specified name
+  /**
+   * Adds a column with the specified name
+   */
   public void newColumn(String name) {
-    m_data.clear();
-    m_attr_name.add(name);
-    m_str_to_enum.add(new HashMap<>());
-    m_enum_to_str.add(new HashMap<>());
+    data.clear();
+    metadata.addColumn(name);
   }
 
-
-  /// Adds a column to this matrix with the specified number of values. (Use 0 for
-  /// a continuous attribute.) This method also sets the number of rows to 0, so
-  /// you will need to call newRow or newRows when you are done adding columns.
-  public void newColumn(int vals) {
-    m_data.clear();
-    String name = "col_" + cols();
-
-    m_attr_name.add(name);
-
-    HashMap<String, Integer> temp_str_to_enum = new HashMap<>();
-    HashMap<Integer, String> temp_enum_to_str = new HashMap<>();
-
-    for (int i = 0; i < vals; i++) {
-      String sVal = "val_" + i;
-      temp_str_to_enum.put(sVal, i);
-      temp_enum_to_str.put(i, sVal);
-    }
-
-    m_str_to_enum.add(temp_str_to_enum);
-    m_enum_to_str.add(temp_enum_to_str);
+  /**
+   * Adds a column to this matrix with the specified number of values. (Use 0 for
+   * a continuous attribute.) This method also sets the number of rows to 0, so
+   * you will need to call newRow or newRows when you are done adding columns.
+   */
+  public void newColumn(int valueCount) {
+    data.clear();
+    metadata.addColumn(valueCount);
   }
 
-
-  /// Adds a column to this matrix with 0 values (continuous data).
+  /**
+   * Adds a column to this matrix with 0 values (continuous data).
+   */
   public void newColumn() {
     this.newColumn(0);
   }
 
-
-  /// Adds n columns to this matrix, each with 0 values (continuous data).
+  /**
+   * Adds n columns to this matrix, each with 0 values (continuous data).
+   */
   public void newColumns(int n) {
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n; i++) {
       newColumn();
+    }
   }
 
-
-  /// Returns the index of the specified value in the specified column.
-  /// If there is no such value, adds it to the column.
-  public int findOrCreateValue(int column, String val) {
-    Integer i = m_str_to_enum.get(column).get(val);
-    if (i == null) {
-      int nextVal = m_enum_to_str.get(column).size();
-      Integer integ = nextVal;
-      m_enum_to_str.get(column).put(integ, val);
-      m_str_to_enum.get(column).put(val, integ);
-      return nextVal;
-    } else
-      return i;
+  /**
+   * Returns the index of the specified value in the specified column.
+   * If there is no such value, adds it to the column.
+   */
+  public int findOrCreateValue(int column, String attribute) {
+    return metadata.findOrCreateValueForAttributeInColumn(attribute, column);
   }
 
-
-  /// Adds one new row to this matrix. Returns a reference to the new row.
+  /**
+   * Adds one new row to this matrix. Returns a reference to the new row.
+   */
   public double[] newRow() {
-    int c = cols();
-    if (c == 0)
+    int columns = cols();
+    if (columns == 0) {
       throw new IllegalArgumentException("You must add some columns before you add any rows.");
-    double[] newRow = new double[c];
-    m_data.add(newRow);
+    }
+
+    double[] newRow = new double[columns];
+    data.add(newRow);
     return newRow;
   }
 
-
-  /// Adds one new row to this matrix at the specified location. Returns a reference to the new row.
+  /**
+   * Adds one new row to this matrix at the specified location. Returns a reference to the new row.
+   */
   public double[] insertRow(int i) {
-    int c = cols();
-    if (c == 0)
+    int columns = cols();
+    if (columns == 0) {
       throw new IllegalArgumentException("You must add some columns before you add any rows.");
-    double[] newRow = new double[c];
-    m_data.add(i, newRow);
+    }
+
+    double[] newRow = new double[columns];
+    data.add(i, newRow);
     return newRow;
   }
 
-
-  /// Removes the specified row from this matrix. Returns a reference to the removed row.
+  /**
+   * Removes the specified row from this matrix. Returns a reference to the removed row.
+   */
   public double[] removeRow(int i) {
-    return m_data.remove(i);
+    return data.remove(i);
   }
 
-
-  /// Appends the specified row to this matrix.
+  /**
+   * Appends the specified row to this matrix.
+   */
   public void takeRow(double[] row) {
-    if (row.length != cols())
+    if (row.length != cols()) {
       throw new IllegalArgumentException("Row size differs from the number of columns in this matrix.");
-    m_data.add(row);
+    }
+
+    data.add(row);
   }
 
   public void setColumn(int index, Vector value) {
-    setColumn(index, value.vals);
+    setColumn(index, value.values);
   }
 
   public void setColumn(int index, double[] values) {
@@ -487,66 +392,35 @@ public class Matrix {
       throw new IllegalArgumentException("Invalid row length (" + row.length + ") for matrix.");
     }
 
-    System.arraycopy(row, 0, m_data.get(index), 0, row.length);
+    System.arraycopy(row, 0, data.get(index), 0, row.length);
   }
 
-
-  /// Adds 'n' new rows to this matrix
+  /**
+   * Adds "n" new rows to the Matrix
+   */
   public void newRows(int n) {
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n; i++) {
       newRow();
+    }
   }
 
-
-  /// Returns the number of rows in the matrix
+  /**
+   *  Returns the number of rows in the matrix
+   */
   public int rows() {
-    return m_data.size();
+    return data.size();
   }
 
-
-  /// Returns the number of columns (or attributes) in the matrix
+  /**
+   * Returns the number of columns (or attributes) in the matrix
+   */
   public int cols() {
-    return m_attr_name.size();
+    return metadata.getAttributeNames().size();
   }
 
-
-  /// Returns the name of the specified attribute
-  public String attrName(int col) {
-    return m_attr_name.get(col);
-  }
-
-
-  /// Returns the name of the specified value
-  public String attrValue(int attr, int val) {
-    String value = m_enum_to_str.get(attr).get(val);
-    if (value == null)
-      throw new IllegalArgumentException("No name");
-    else
-      return value;
-  }
-
-
-  public String getString(int r, int c) {
-    double val = m_data.get(r)[c];
-    return attrValue(c, (int) val);
-  }
-
-  /// Returns the enumerated index of the specified string
-  public int valueEnum(int attr, String val) {
-    Integer i = m_str_to_enum.get(attr).get(val);
-    if (i == null) {
-      // Make a very detailed error message listing all possible choices
-      StringBuilder s = new StringBuilder();
-      for (Map.Entry<String, Integer> stringIntegerEntry : m_str_to_enum.get(attr).entrySet()) {
-        if (s.length() > 0)
-          s.append(", ");
-        s.append("\"").append(stringIntegerEntry.getKey()).append("\"");
-        s.append("->");
-        s.append(Integer.toString(stringIntegerEntry.getValue()));
-      }
-      throw new IllegalArgumentException("No such value: \"" + val + "\". Choices are: " + s);
-    } else
-      return i;
+  public String getString(int row, int column) {
+    double value = data.get(row)[column];
+    return metadata.getAttributeForValueInColumn((int) value, column);
   }
 
   private void checkIndex(int row, int column) {
@@ -571,11 +445,12 @@ public class Matrix {
     row(row).set(column, value);
   }
 
-  /// Returns a reference to the specified row
+  /**
+   * Returns a reference to the specified row
+   */
   public Vector row(int index) {
-    return new Vector(m_data.get(index));
+    return new Vector(data.get(index));
   }
-
 
   public Vector column(int index) {
     Vector column = new Vector(rows());
@@ -595,34 +470,32 @@ public class Matrix {
     }
   }
 
-  /// Swaps the positions of the two specified rows
+  /**
+   * Swaps the positions of the two specified rows
+   */
   public void swapRows(int a, int b) {
-    double[] temp = m_data.get(a);
-    m_data.set(a, m_data.get(b));
-    m_data.set(b, temp);
+    double[] temp = data.get(a);
+    data.set(a, data.get(b));
+    data.set(b, temp);
   }
 
-
-  /// Returns the number of values associated with the specified attribute (or column)
-  /// 0 = continuous, 2 = binary, 3 = trinary, etc.
-  public int valueCount(int attr) {
-    return m_enum_to_str.get(attr).size();
-  }
-
-
-  /// Copies that matrix
+  /**
+   * Copies that matrix
+   */
   void copy(Matrix that) {
     setSize(that.rows(), that.cols());
     copyBlock(0, 0, that, 0, 0, that.rows(), that.cols());
   }
 
-
-  /// Returns the mean of the elements in the specified column. (Elements with the value UNKNOWN_VALUE are ignored.)
-  public double columnMean(int col) {
+  /**
+   * Returns the mean of the elements in the specified column.
+   * (Elements with the value UNKNOWN_VALUE are ignored)
+   */
+  public double columnMean(int column) {
     double sum = 0.0;
     int count = 0;
-    for (double[] list : m_data) {
-      double val = list[col];
+    for (double[] list : data) {
+      double val = list[column];
       if (val != UNKNOWN_VALUE) {
         sum += val;
         count++;
@@ -633,36 +506,45 @@ public class Matrix {
   }
 
 
-  /// Returns the minimum element in the specified column. (Elements with the value UNKNOWN_VALUE are ignored.)
+  /**
+   * Returns the minimum element in the specified column.
+   * (Elements with the value UNKNOWN_VALUE are ignored.)
+   */
   public double columnMin(int col) {
     double min = Double.MAX_VALUE;
-    for (double[] list : m_data) {
+    for (double[] list : data) {
       double val = list[col];
-      if (val != UNKNOWN_VALUE)
+      if (val != UNKNOWN_VALUE) {
         min = Math.min(min, val);
+      }
     }
 
     return min;
   }
 
 
-  /// Returns the maximum element in the specified column. (Elements with the value UNKNOWN_VALUE are ignored.)
+  /**
+   * Returns the maximum element in the specified column.
+   * (Elements with the value UNKNOWN_VALUE are ignored.)
+   */
   public double columnMax(int col) {
     double max = -Double.MAX_VALUE;
-    for (double[] list : m_data) {
+    for (double[] list : data) {
       double val = list[col];
-      if (val != UNKNOWN_VALUE)
+      if (val != UNKNOWN_VALUE) {
         max = Math.max(max, val);
+      }
     }
 
     return max;
   }
 
-
-  /// Returns the most common value in the specified column. (Elements with the value UNKNOWN_VALUE are ignored.)
+  /**
+   * Returns the most common value in the specified column. (Elements with the value UNKNOWN_VALUE are ignored.)
+   */
   public double mostCommonValue(int col) {
     HashMap<Double, Integer> counts = new HashMap<>();
-    for (double[] list : m_data) {
+    for (double[] list : data) {
       double val = list[col];
       if (val != UNKNOWN_VALUE) {
         Integer result = counts.get(val);
@@ -684,8 +566,9 @@ public class Matrix {
     return value;
   }
 
-
-  /// Copies the specified rectangular portion of that matrix, and puts it in the specified location in this matrix.
+  /**
+   * Copies the specified rectangular portion of that matrix, and puts it in the specified location in this matrix.
+   */
   public void copyBlock(int destRow, int destCol, Matrix that, int rowBegin, int colBegin, int rowCount, int colCount) {
     if (destRow + rowCount > this.rows() || destCol + colCount > this.cols())
       throw new IllegalArgumentException("Out of range for destination matrix.");
@@ -694,23 +577,60 @@ public class Matrix {
 
     // Copy the specified region of meta-data
     for (int i = 0; i < colCount; i++) {
-      m_attr_name.set(destCol + i, that.m_attr_name.get(colBegin + i));
-      m_str_to_enum.set(destCol + i, new HashMap<>(that.m_str_to_enum.get(colBegin + i)));
-      m_enum_to_str.set(destCol + i, new HashMap<>(that.m_enum_to_str.get(colBegin + i)));
+      that.getMetadata().copyAttributeToMetadata(this.metadata, colBegin + i, destCol + i);
     }
 
     // Copy the specified region of data
     for (int i = 0; i < rowCount; i++) {
-      double[] source = that.m_data.get(rowBegin + i);
-      double[] dest = this.m_data.get(destRow + i);
+      double[] source = that.data.get(rowBegin + i);
+      double[] dest = this.data.get(destRow + i);
       System.arraycopy(source, colBegin, dest, destCol, colCount);
     }
   }
 
+  public Matrix copyBlock(int startRow, int startCol, int rows, int cols) {
+    Matrix result = new Matrix(rows, cols);
+    result.copyBlock(0, 0, this, startRow, startCol, rows, cols);
+    return result;
+  }
 
-  /// Sets every element in the matrix to the specified value.
+  public Matrix duplicateRows(int rowStart, int rowEnd) {
+    Matrix result = new Matrix(rowEnd - rowStart, this.cols());
+    result.copyBlock(0, 0, this, rowStart, 0, rowEnd - rowStart, this.cols());
+    return result;
+  }
+
+  public Matrix toOneHot() {
+    if (cols() != 1) {
+      throw new IllegalStateException("Cannot convert a multi-column matrix to one-hot representation");
+    }
+
+    int maxValue = 0;
+
+    for (int i = 0; i < rows(); i++) {
+      Vector row = row(i);
+      int value = (int) Math.round(row.get(0));
+      if (value > maxValue) {
+        maxValue = value;
+      }
+    }
+
+    Matrix result = new Matrix(rows(), maxValue + 1);
+
+    for (int i = 0; i < rows(); i++) {
+      Vector row = row(i);
+      int value = (int) Math.round(row.get(0));
+      result.set(i, value, 1);
+    }
+
+    return result;
+  }
+
+  /**
+   * Sets every element in the matrix to the specified value.
+   */
   public void fill(double val) {
-    for (double[] vec : m_data) {
+    for (double[] vec : data) {
       for (int i = 0; i < vec.length; i++)
         vec[i] = val;
     }
@@ -724,22 +644,23 @@ public class Matrix {
     }
   }
 
-
-  /// Sets every element in the matrix to the specified value.
+  /**
+   * Scales every element in the matrix by the specified value
+   */
   public void scale(double scalar) {
-    for (double[] vec : m_data) {
+    for (double[] vec : data) {
       for (int i = 0; i < vec.length; i++)
         vec[i] *= scalar;
     }
   }
 
-
   public void add(Matrix that) {
     addScaled(that, 1);
   }
 
-
-  /// Adds every element in that matrix to this one
+  /**
+   * Adds every element in that matrix to this one
+   */
   public void addScaled(Matrix that, double scalar) {
     if (that.rows() != this.rows() || that.cols() != this.cols())
       throw new IllegalArgumentException("Mismatching size");
@@ -750,26 +671,31 @@ public class Matrix {
     }
   }
 
-
-  /// Sets this to the identity matrix.
+  /**
+   * Sets this to the identity matrix.
+   */
   public void setToIdentity() {
     fill(0.0);
     int m = Math.min(cols(), rows());
     for (int i = 0; i < m; i++)
-      m_data.get(i)[i] = 1.0;
+      data.get(i)[i] = 1.0;
   }
 
-
-  /// Throws an exception if that has a different number of columns than
-  /// this, or if one of its columns has a different number of values.
+  /**
+   * Throws an exception if that has a different number of columns than
+   * this, or if one of its columns has a different number of values.
+   */
   public void checkCompatibility(Matrix that) {
-    int c = cols();
-    if (that.cols() != c)
+    int columns = cols();
+    if (that.cols() != columns) {
       throw new IllegalArgumentException("Matrices have different number of columns.");
+    }
 
-    for (int i = 0; i < c; i++) {
-      if (valueCount(i) != that.valueCount(i))
+    for (int i = 0; i < columns; i++) {
+      if (metadata.getEnumSizeForAttributeInColumn(i)
+          != that.getMetadata().getEnumSizeForAttributeInColumn(i)) {
         throw new IllegalArgumentException("Column " + i + " has mis-matching number of values.");
+      }
     }
   }
 
@@ -855,9 +781,8 @@ public class Matrix {
   }
 
   public void sort(int column, boolean ascending) {
-    m_data.sort(new SortComparator(column, ascending));
+    data.sort(new SortComparator(column, ascending));
   }
-
 
   double Matrix_pythag(double a, double b) {
     double at = Math.abs(a);
@@ -889,7 +814,7 @@ public class Matrix {
   void fixNans() {
     int colCount = cols();
     for (int i = 0; i < rows(); i++) {
-      double[] pRow = m_data.get(i);
+      double[] pRow = data.get(i);
       for (int j = 0; j < colCount; j++) {
         if (Double.isNaN(pRow[j]))
           pRow[j] = (i == j ? 1.0 : 0.0);
@@ -901,57 +826,32 @@ public class Matrix {
     Matrix res = new Matrix(cols(), rows());
     for (int i = 0; i < rows(); i++) {
       for (int j = 0; j < cols(); j++)
-        res.m_data.get(j)[i] = m_data.get(i)[j];
+        res.data.get(j)[i] = data.get(i)[j];
     }
     return res;
   }
 
-
-  /// Swaps the the two specified columns */
+  /**
+   * Swaps the the two specified columns
+   */
   public void swapColumns(int a, int b) {
     for (int i = 0; i < rows(); i++) {
-      double[] r = m_data.get(i);
-      double t = r[a];
-      r[a] = r[b];
-      r[b] = t;
+      double[] row = data.get(i);
+      double valueTemp = row[a];
+      row[a] = row[b];
+      row[b] = valueTemp;
     }
-    String t = m_attr_name.get(a);
-    m_attr_name.set(a, m_attr_name.get(b));
-    m_attr_name.set(b, t);
-    HashMap<String, Integer> t2 = m_str_to_enum.get(a);
-    m_str_to_enum.set(a, m_str_to_enum.get(b));
-    m_str_to_enum.set(b, t2);
-    HashMap<Integer, String> t3 = m_enum_to_str.get(a);
-    m_enum_to_str.set(a, m_enum_to_str.get(b));
-    m_enum_to_str.set(b, t3);
+
+    metadata.swapColumns(a, b);
   }
 
-  /*
-      /// Multiplies this matrix by v. If transpose is true, transposes this matrix first.
-      double[] multiply(double[] v, boolean transpose)
-      {
-          int r = rows();
-          if(transpose)
-          {
-              Vector y = new Vector(cols());
-              for(int i = 0; i < r; i++)
-                  y.addScaled(v[i], row(i));
-              return y;
-          }
-          else
-          {
-              double[] y = new double[r];
-              for(int i = 0; i < r; i++)
-                  y[i] = v.dotProduct(row(i));
-              return y;
-          }
-      }
-  */
   static Matrix multiply(Matrix a, Matrix b) {
     return multiply(a, b, false, false);
   }
 
-  /// Multiplies two  matrices together
+  /**
+   * Multiplies two Matrices and returns the result.
+   */
   static Matrix multiply(Matrix a, Matrix b, boolean transposeA, boolean transposeB) {
     Matrix res = new Matrix(transposeA ? a.cols() : a.rows(), transposeB ? b.rows() : b.cols());
     if (transposeA) {
@@ -962,8 +862,8 @@ public class Matrix {
           for (int j = 0; j < res.cols(); j++) {
             double d = 0.0;
             for (int k = 0; k < a.rows(); k++)
-              d += a.m_data.get(k)[i] * b.m_data.get(j)[k];
-            res.m_data.get(i)[j] = d;
+              d += a.data.get(k)[i] * b.data.get(j)[k];
+            res.data.get(i)[j] = d;
           }
         }
       } else {
@@ -973,8 +873,8 @@ public class Matrix {
           for (int j = 0; j < res.cols(); j++) {
             double d = 0.0;
             for (int k = 0; k < a.rows(); k++)
-              d += a.m_data.get(k)[i] * b.m_data.get(k)[j];
-            res.m_data.get(i)[j] = d;
+              d += a.data.get(k)[i] * b.data.get(k)[j];
+            res.data.get(i)[j] = d;
           }
         }
       }
@@ -986,8 +886,8 @@ public class Matrix {
           for (int j = 0; j < res.cols(); j++) {
             double d = 0.0;
             for (int k = 0; k < a.cols(); k++)
-              d += a.m_data.get(i)[k] * b.m_data.get(j)[k];
-            res.m_data.get(i)[j] = d;
+              d += a.data.get(i)[k] * b.data.get(j)[k];
+            res.data.get(i)[j] = d;
           }
         }
       } else {
@@ -997,8 +897,8 @@ public class Matrix {
           for (int j = 0; j < res.cols(); j++) {
             double d = 0.0;
             for (int k = 0; k < a.cols(); k++)
-              d += a.m_data.get(i)[k] * b.m_data.get(k)[j];
-            res.m_data.get(i)[j] = d;
+              d += a.data.get(i)[k] * b.data.get(k)[j];
+            res.data.get(i)[j] = d;
           }
         }
       }
@@ -1006,15 +906,15 @@ public class Matrix {
     return res;
   }
 
-
   class SVDResult {
     Matrix u;
     Matrix v;
     double[] diag;
   }
 
-
-  /// Performs singular value decomposition of this matrix
+  /**
+   * Performs singular value decomposition of this matrix
+   */
   SVDResult singularValueDecompositionHelper(boolean throwIfNoConverge, int maxIters) {
     int m = rows();
     int n = cols();
@@ -1032,8 +932,8 @@ public class Matrix {
     res.u = pU;
     pU.fill(0.0);
     for (int i = 0; i < m; i++) {
-      double[] rOut = pU.m_data.get(i);
-      double[] rIn = m_data.get(i);
+      double[] rOut = pU.data.get(i);
+      double[] rIn = data.get(i);
       for (j = 0; j < n; j++)
         rOut[j] = rIn[j];
     }
@@ -1054,29 +954,29 @@ public class Matrix {
       scale = 0.0;
       if (i < m) {
         for (k = i; k < m; k++)
-          scale += Math.abs(pU.m_data.get(k)[i]);
+          scale += Math.abs(pU.data.get(k)[i]);
         if (scale != 0.0) {
           for (k = i; k < m; k++) {
-            pU.m_data.get(k)[i] = Matrix_safeDivide(pU.m_data.get(k)[i], scale);
-            double t = pU.m_data.get(k)[i];
+            pU.data.get(k)[i] = Matrix_safeDivide(pU.data.get(k)[i], scale);
+            double t = pU.data.get(k)[i];
             s += t * t;
           }
-          f = pU.m_data.get(i)[i];
+          f = pU.data.get(i)[i];
           g = -Matrix_takeSign(Math.sqrt(s), f);
           h = f * g - s;
-          pU.m_data.get(i)[i] = f - g;
+          pU.data.get(i)[i] = f - g;
           if (i != n - 1) {
             for (j = l; j < n; j++) {
               s = 0.0;
               for (k = i; k < m; k++)
-                s += pU.m_data.get(k)[i] * pU.m_data.get(k)[j];
+                s += pU.data.get(k)[i] * pU.data.get(k)[j];
               f = Matrix_safeDivide(s, h);
               for (k = i; k < m; k++)
-                pU.m_data.get(k)[j] += f * pU.m_data.get(k)[i];
+                pU.data.get(k)[j] += f * pU.data.get(k)[i];
             }
           }
           for (k = i; k < m; k++)
-            pU.m_data.get(k)[i] *= scale;
+            pU.data.get(k)[i] *= scale;
         }
       }
       pSigma[i] = scale * g;
@@ -1087,30 +987,30 @@ public class Matrix {
       scale = 0.0;
       if (i < m && i != n - 1) {
         for (k = l; k < n; k++)
-          scale += Math.abs(pU.m_data.get(i)[k]);
+          scale += Math.abs(pU.data.get(i)[k]);
         if (scale != 0.0) {
           for (k = l; k < n; k++) {
-            pU.m_data.get(i)[k] = Matrix_safeDivide(pU.m_data.get(i)[k], scale);
-            double t = pU.m_data.get(i)[k];
+            pU.data.get(i)[k] = Matrix_safeDivide(pU.data.get(i)[k], scale);
+            double t = pU.data.get(i)[k];
             s += t * t;
           }
-          f = pU.m_data.get(i)[l];
+          f = pU.data.get(i)[l];
           g = -Matrix_takeSign(Math.sqrt(s), f);
           h = f * g - s;
-          pU.m_data.get(i)[l] = f - g;
+          pU.data.get(i)[l] = f - g;
           for (k = l; k < n; k++)
-            temp[k] = Matrix_safeDivide(pU.m_data.get(i)[k], h);
+            temp[k] = Matrix_safeDivide(pU.data.get(i)[k], h);
           if (i != m - 1) {
             for (j = l; j < m; j++) {
               s = 0.0;
               for (k = l; k < n; k++)
-                s += pU.m_data.get(j)[k] * pU.m_data.get(i)[k];
+                s += pU.data.get(j)[k] * pU.data.get(i)[k];
               for (k = l; k < n; k++)
-                pU.m_data.get(j)[k] += s * temp[k];
+                pU.data.get(j)[k] += s * temp[k];
             }
           }
           for (k = l; k < n; k++)
-            pU.m_data.get(i)[k] *= scale;
+            pU.data.get(i)[k] *= scale;
         }
       }
       norm = Math.max(norm, Math.abs(pSigma[i]) + Math.abs(temp[i]));
@@ -1121,21 +1021,21 @@ public class Matrix {
       if (i < n - 1) {
         if (g != 0.0) {
           for (j = l; j < n; j++)
-            pV.m_data.get(i)[j] = Matrix_safeDivide(Matrix_safeDivide(pU.m_data.get(i)[j], pU.m_data.get(i)[l]), g); // (double-division to avoid underflow)
+            pV.data.get(i)[j] = Matrix_safeDivide(Matrix_safeDivide(pU.data.get(i)[j], pU.data.get(i)[l]), g); // (double-division to avoid underflow)
           for (j = l; j < n; j++) {
             s = 0.0;
             for (k = l; k < n; k++)
-              s += pU.m_data.get(i)[k] * pV.m_data.get(j)[k];
+              s += pU.data.get(i)[k] * pV.data.get(j)[k];
             for (k = l; k < n; k++)
-              pV.m_data.get(j)[k] += s * pV.m_data.get(i)[k];
+              pV.data.get(j)[k] += s * pV.data.get(i)[k];
           }
         }
         for (j = l; j < n; j++) {
-          pV.m_data.get(i)[j] = 0.0;
-          pV.m_data.get(j)[i] = 0.0;
+          pV.data.get(i)[j] = 0.0;
+          pV.data.get(j)[i] = 0.0;
         }
       }
-      pV.m_data.get(i)[i] = 1.0;
+      pV.data.get(i)[i] = 1.0;
       g = temp[i];
       l = i;
     }
@@ -1146,7 +1046,7 @@ public class Matrix {
       g = pSigma[i];
       if (i < n - 1) {
         for (j = l; j < n; j++)
-          pU.m_data.get(i)[j] = 0.0;
+          pU.data.get(i)[j] = 0.0;
       }
       if (g != 0.0) {
         g = Matrix_safeDivide(1.0, g);
@@ -1154,19 +1054,19 @@ public class Matrix {
           for (j = l; j < n; j++) {
             s = 0.0;
             for (k = l; k < m; k++)
-              s += pU.m_data.get(k)[i] * pU.m_data.get(k)[j];
-            f = Matrix_safeDivide(s, pU.m_data.get(i)[i]) * g;
+              s += pU.data.get(k)[i] * pU.data.get(k)[j];
+            f = Matrix_safeDivide(s, pU.data.get(i)[i]) * g;
             for (k = i; k < m; k++)
-              pU.m_data.get(k)[j] += f * pU.m_data.get(k)[i];
+              pU.data.get(k)[j] += f * pU.data.get(k)[i];
           }
         }
         for (j = i; j < m; j++)
-          pU.m_data.get(j)[i] *= g;
+          pU.data.get(j)[i] *= g;
       } else {
         for (j = i; j < m; j++)
-          pU.m_data.get(j)[i] = 0.0;
+          pU.data.get(j)[i] = 0.0;
       }
-      pU.m_data.get(i)[i] += 1.0;
+      pU.data.get(i)[i] += 1.0;
     }
 
     // Diagonalize the bidiagonal matrix
@@ -1201,10 +1101,10 @@ public class Matrix {
             c = g * h;
             s = -f * h;
             for (j = 0; j < m; j++) {
-              y = pU.m_data.get(j)[q];
-              z = pU.m_data.get(j)[i];
-              pU.m_data.get(j)[q] = y * c + z * s;
-              pU.m_data.get(j)[i] = z * c - y * s;
+              y = pU.data.get(j)[q];
+              z = pU.data.get(j)[i];
+              pU.data.get(j)[q] = y * c + z * s;
+              pU.data.get(j)[i] = z * c - y * s;
             }
           }
         }
@@ -1216,7 +1116,7 @@ public class Matrix {
             // Singular value should be positive
             pSigma[k] = -z;
             for (j = 0; j < n; j++)
-              pV.m_data.get(k)[j] *= -1.0;
+              pV.data.get(k)[j] *= -1.0;
           }
           break;
         }
@@ -1251,10 +1151,10 @@ public class Matrix {
           h = y * s;
           y = y * c;
           for (p = 0; p < n; p++) {
-            x = pV.m_data.get(j)[p];
-            z = pV.m_data.get(i)[p];
-            pV.m_data.get(j)[p] = x * c + z * s;
-            pV.m_data.get(i)[p] = z * c - x * s;
+            x = pV.data.get(j)[p];
+            z = pV.data.get(i)[p];
+            pV.data.get(j)[p] = x * c + z * s;
+            pV.data.get(i)[p] = z * c - x * s;
           }
           z = Matrix_pythag(f, h);
           pSigma[j] = z;
@@ -1266,10 +1166,10 @@ public class Matrix {
           f = c * g + s * y;
           x = c * y - s * g;
           for (p = 0; p < m; p++) {
-            y = pU.m_data.get(p)[j];
-            z = pU.m_data.get(p)[i];
-            pU.m_data.get(p)[j] = y * c + z * s;
-            pU.m_data.get(p)[i] = z * c - y * s;
+            y = pU.data.get(p)[j];
+            z = pU.data.get(p)[i];
+            pU.data.get(p)[j] = y * c + z * s;
+            pU.data.get(p)[i] = z * c - y * s;
           }
         }
         temp[l] = 0.0;
@@ -1297,8 +1197,9 @@ public class Matrix {
     return res;
   }
 
-
-  /// Returns the Moore-Penrose pseudoinverse of this matrix
+  /**
+   * Returns the Moore-Penrose pseudoinverse of this matrix
+   */
   Matrix pseudoInverse() {
     SVDResult res;
     int colCount = cols();
@@ -1313,9 +1214,9 @@ public class Matrix {
     int m = Math.min(rowCount, colCount);
     for (int i = 0; i < m; i++) {
       if (Math.abs(res.diag[i]) > 1e-9)
-        sigma.m_data.get(i)[i] = Matrix_safeDivide(1.0, res.diag[i]);
+        sigma.data.get(i)[i] = Matrix_safeDivide(1.0, res.diag[i]);
       else
-        sigma.m_data.get(i)[i] = 0.0;
+        sigma.data.get(i)[i] = 0.0;
     }
     Matrix pT = Matrix.multiply(res.u, sigma, false, false);
     if (rowCount < colCount)
@@ -1345,70 +1246,6 @@ public class Matrix {
 
     return true;
   }
-
-	/*
-	/// Computes the first principal component of this matrix
-	double[] firstPrincipalComponent(Random rand)
-	{
-		int c = cols();
-		int r = rows();
-		double[] p = new double[c];
-		double[] t = new double[c];
-		for(int i = 0; i < c; i++)
-			p[i] = rand.nextGaussian();
-		Vector.normalize(p);
-		double m = 0;
-		for(int i = 0; i < 200; i++)
-		{
-			t.fill(0.0);
-			for(int j = 0; j < r; j++)
-				Vector.addScaled(t, row(j), Vector.dotProduct(row(j), p));
-			double d = Math.sqrt(Vector.squaredMagnitude(t));
-			Vector.normalize(t);
-			double[] tt = p;
-			p = t;
-			t = tt;
-			if(i < 6 || d - m > 0.0001)
-				m = d;
-			else
-				break;
-		}
-		return p;
-	}
-
-
-	/// Uses the Gram Schmidt process to remove a component from a matrix
-	void gramSchmidt(double[] v)
-	{
-		int b = 0;
-		int r = rows();
-		for(int i = 0; i < r; i++)
-		{
-			double d = Vector.dotProduct(row(i), v);
-			Vector.addScaled(row(i), v, -d);
-		}
-	}
-
-
-	/// Returns a matrix containing the first k principal components of this matrix. (Destroys the contents of this matrix.)
-	Matrix pca(int k, Random rand, double[] centroid)
-	{
-		int c = cols();
-		int r = rows();
-		for(int i = 0; i < c; i++)
-		{
-			for(int j = 0; j < r; j++)
-				row(j)[i] -= centroid[i];
-		}
-		Matrix m = new Matrix(k, c);
-		for(int i = 0; i < k; i++)
-		{
-			double[] p = firstPrincipalComponent(rand);
-			gramSchmidt(p);
-			Vector.copy(m.row(i), p);
-		}
-		return m;
-	}*/
 
   public static int[] computeFoldSizes(int totalLength, int folds) {
     int foldSize = totalLength / folds;

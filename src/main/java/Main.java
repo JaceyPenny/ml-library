@@ -72,7 +72,41 @@ class Main {
     }
   }
 
+  public static void runAssignment3() {
+    Matrix dataSet = Matrix.fromARFF("data/hypothyroid.arff");
+    dataSet.shuffleRows();
+
+    int trainingRows = Math.round(0.8f * dataSet.rows());
+    int testingRows = dataSet.rows() - trainingRows;
+
+    Matrix trainingFeatures = dataSet.copyBlock(0, 0, trainingRows, 29);
+    Matrix trainingLabels = dataSet.copyBlock(0, 29, trainingRows, 1).toOneHot();
+
+    Matrix testingFeatures = dataSet.copyBlock(trainingRows, 0, testingRows, 29);
+    Matrix testingLabels = dataSet.copyBlock(trainingRows, 29, testingRows, 1).toOneHot();
+
+    NeuralNetwork neuralNetwork = new NeuralNetwork();
+    neuralNetwork.addFirstLayer(LayerType.LINEAR, 29, 20);
+    neuralNetwork.addLayer(LayerType.TANH, 20);
+    neuralNetwork.addLayer(LayerType.LINEAR, 10);
+    neuralNetwork.addLayer(LayerType.TANH, 10);
+    neuralNetwork.addLayer(LayerType.LINEAR, 4);
+    neuralNetwork.addLayer(LayerType.TANH, 4);
+
+    neuralNetwork.initializeWeights();
+
+    int misclassifications = neuralNetwork.countMisclassifications(testingFeatures, testingLabels);
+
+    System.out.printf("Baseline; Misclassifications: %d / %d\n", misclassifications, testingLabels.rows());
+
+    for (int i = 0; i < EPOCHS; i++) {
+      neuralNetwork.trainMiniBatch(trainingFeatures, trainingLabels, 20);
+      misclassifications = neuralNetwork.countMisclassifications(testingFeatures, testingLabels);
+      System.out.printf("Epoch %d; Misclassifications: %d / %d\n", i + 1, misclassifications, testingLabels.rows());
+    }
+  }
+
   public static void main(String[] args) {
-    runAssignment2();
+    runAssignment3();
   }
 }

@@ -11,12 +11,12 @@ import java.util.function.Supplier;
  * Represents a vector of doubles
  */
 public class Vector {
-  protected double[] vals;
-  protected int start;
-  private int len;
+  protected double[] values;
+  protected int startIndex;
+  private int length;
 
   public static Vector copy(Vector other) {
-    Vector newVector = new Vector(other.len);
+    Vector newVector = new Vector(other.length);
     newVector.set(0, other);
     return newVector;
   }
@@ -25,47 +25,51 @@ public class Vector {
    * Makes an vector of the specified size
    */
   public Vector(int size) {
-    if (size == 0)
-      vals = null;
-    else
-      vals = new double[size];
-    start = 0;
-    len = size;
+    if (size == 0) {
+      values = null;
+    } else {
+      values = new double[size];
+    }
+
+    startIndex = 0;
+    length = size;
   }
 
   /**
    * Wraps the specified array of doubles
    */
   public Vector(double[] data) {
-    vals = data;
-    start = 0;
-    len = data.length;
+    values = data;
+    startIndex = 0;
+    length = data.length;
   }
 
   /**
    * This is NOT a copy constructor. It wraps the same buffer of values as v.
    */
-  public Vector(Vector v, int begin, int length) {
-    vals = v.vals;
-    start = v.start + begin;
-    len = length;
+  public Vector(Vector other, int begin, int length) {
+    values = other.values;
+    startIndex = other.startIndex + begin;
+    this.length = length;
   }
 
   /**
    * Unmarshalling constructor
    */
-  public Vector(Json n) {
-    vals = new double[n.size()];
-    for (int i = 0; i < n.size(); i++)
-      vals[i] = n.getDouble(i);
-    start = 0;
-    len = n.size();
+  public Vector(Json json) {
+    values = new double[json.size()];
+    for (int i = 0; i < json.size(); i++) {
+      values[i] = json.getDouble(i);
+    }
+    startIndex = 0;
+    length = json.size();
   }
 
   public Json marshal() {
     Json list = Json.newList();
-    for (int i = 0; i < len; i++)
-      list.add(vals[start + i]);
+    for (int i = 0; i < length; i++) {
+      list.add(values[startIndex + i]);
+    }
     return list;
   }
 
@@ -82,15 +86,15 @@ public class Vector {
   }
 
   public int size() {
-    return len;
+    return length;
   }
 
   public double get(int index) {
-    return vals[start + index];
+    return values[startIndex + index];
   }
 
   public void set(int index, double value) {
-    vals[start + index] = value;
+    values[startIndex + index] = value;
   }
 
   public void fill(Supplier<Double> supplier) {
@@ -100,41 +104,44 @@ public class Vector {
   }
 
   public void fill(double val) {
-    for (int i = 0; i < len; i++)
-      vals[start + i] = val;
+    for (int i = 0; i < length; i++) {
+      values[startIndex + i] = val;
+    }
   }
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append('[');
-    if (len > 0) {
-      sb.append(String.format("%6.3e", vals[start]));
-      for (int i = 1; i < len; i++) {
-        sb.append(",");
-        sb.append(String.format("%6.3e", vals[start + i]));
+    StringBuilder stringBuilder = new StringBuilder();
+    stringBuilder.append('[');
+    if (length > 0) {
+      stringBuilder.append(String.format("%6.3e", values[startIndex]));
+      for (int i = 1; i < length; i++) {
+        stringBuilder.append(",");
+        stringBuilder.append(String.format("%6.3e", values[startIndex + i]));
       }
     }
-    sb.append(']');
-    return sb.toString();
+    stringBuilder.append(']');
+    return stringBuilder.toString();
   }
 
   public double squaredMagnitude() {
-    double d = 0.0;
-    for (int i = 0; i < len; i++)
-      d += vals[start + i] * vals[start + i];
-    return d;
+    double result = 0.0;
+    for (int i = 0; i < length; i++) {
+      result += values[startIndex + i] * values[startIndex + i];
+    }
+    return result;
   }
 
   public void normalize() {
-    double mag = squaredMagnitude();
-    if (mag <= 0.0) {
+    double magnitude = squaredMagnitude();
+    if (magnitude <= 0.0) {
       fill(0.0);
-      vals[0] = 1.0;
+      values[0] = 1.0;
     } else {
-      double s = 1.0 / Math.sqrt(mag);
-      for (int i = 0; i < len; i++)
-        vals[i] *= s;
+      double ratio = 1.0 / Math.sqrt(magnitude);
+      for (int i = 0; i < length; i++) {
+        values[i] *= ratio;
+      }
     }
   }
 
@@ -151,68 +158,79 @@ public class Vector {
   }
 
   public void add(Vector that) {
-    if (that.size() != this.size())
+    if (that.size() != this.size()) {
       throw new IllegalArgumentException("mismatching sizes");
-    for (int i = 0; i < len; i++)
-      vals[start + i] += that.get(i);
+    }
+
+    for (int i = 0; i < length; i++) {
+      values[startIndex + i] += that.get(i);
+    }
   }
 
   public void set(int startIndex, Vector values) {
-    if (startIndex < 0 || startIndex >= len) {
+    if (startIndex < 0 || startIndex >= length) {
       throw new IllegalArgumentException("startIndex is outside of the Vector bounds");
     }
 
     int i = startIndex;
-    while (i < len && (i - startIndex) < values.len) {
+    while (i < length && (i - startIndex) < values.length) {
       set(i, values.get(i - startIndex));
       i++;
     }
   }
 
   public void scale(double scalar) {
-    for (int i = 0; i < len; i++)
-      vals[start + i] *= scalar;
+    for (int i = 0; i < length; i++) {
+      values[startIndex + i] *= scalar;
+    }
   }
 
   public void addScaled(Vector that, double scalar) {
-    if (that.size() != this.size())
+    if (that.size() != this.size()) {
       throw new IllegalArgumentException("mismatching sizes");
-    for (int i = 0; i < len; i++) {
-      vals[start + i] += scalar * that.get(i);
+    }
+
+    for (int i = 0; i < length; i++) {
+      values[startIndex + i] += scalar * that.get(i);
     }
   }
 
   public double dotProduct(Vector that) {
-    if (that.size() != this.size())
+    if (that.size() != this.size()) {
       throw new IllegalArgumentException("mismatching sizes");
-    double d = 0.0;
-    for (int i = 0; i < len; i++)
-      d += get(i) * that.get(i);
-    return d;
+    }
+
+    double result = 0.0;
+    for (int i = 0; i < length; i++) {
+      result += get(i) * that.get(i);
+    }
+    return result;
   }
 
   public double squaredDistance(Vector that) {
-    if (that.size() != this.size())
+    if (that.size() != this.size()) {
       throw new IllegalArgumentException("mismatching sizes");
-    double d = 0.0;
-    for (int i = 0; i < len; i++) {
-      double t = get(i) - that.get(i);
-      d += (t * t);
     }
-    return d;
+
+    double result = 0.0;
+    for (int i = 0; i < length; i++) {
+      double distance = get(i) - that.get(i);
+      result += distance * distance;
+    }
+    return result;
   }
 
   public double reduce() {
     double sum = 0;
-    for (double d : vals) {
-      sum += d;
+    for (int i = 0; i < size(); i++) {
+      sum += get(i);
     }
     return sum;
   }
 
   public double[] toDoubleArray() {
-    double[] array = new double[len];
-    System.arraycopy(vals, start, array, 0, len);
+    double[] array = new double[length];
+    System.arraycopy(values, startIndex, array, 0, length);
     return array;
   }
 
@@ -250,6 +268,6 @@ public class Vector {
 
   @Override
   public boolean equals(Object other) {
-    return other instanceof Vector && Arrays.equals(this.vals, ((Vector) other).vals);
+    return other instanceof Vector && Arrays.equals(this.values, ((Vector) other).values);
   }
 }

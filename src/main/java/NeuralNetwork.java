@@ -1,3 +1,4 @@
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -8,8 +9,14 @@ public class NeuralNetwork extends SupervisedLearner {
 
   private List<Layer> layers;
 
+  private OutputStream outputStream;
+
   public NeuralNetwork() {
     this.layers = new ArrayList<>();
+  }
+
+  public void setOutputStream(OutputStream outputStream) {
+    this.outputStream = outputStream;
   }
 
   @Override
@@ -118,10 +125,20 @@ public class NeuralNetwork extends SupervisedLearner {
 
   @Override
   void train(Matrix features, Matrix labels) {
-    train(features, labels, features.rows(), 1);
+    trainStochastic(features, labels);
+  }
+
+  void trainStochastic(Matrix features, Matrix labels) {
+    trainMiniBatch(features, labels, 1);
+  }
+
+  void trainMiniBatch(Matrix features, Matrix labels, int batchSize) {
+    train(features, labels, features.rows() / batchSize, batchSize);
   }
 
   void train(Matrix features, Matrix labels, int repetitions, int stochastic) {
+    shuffleData(features, labels);
+
     for (int i = 0; i < repetitions; i++) {
       for (int j = 0; j < stochastic; j++) {
         int row = RANDOM.nextInt(features.rows());
