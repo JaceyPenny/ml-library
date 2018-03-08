@@ -143,9 +143,15 @@ public class LayerLinear extends Layer {
 
   @Override
   void applyGradient(double learningRate) {
+    applyGradient(learningRate, 0);
+  }
+
+  @Override
+  void applyGradient(double learningRate, double momentum) {
     weights.addScaled(weightsGradient, learningRate);
     bias.addScaled(biasGradient, learningRate);
 
-    resetGradient();
+    weightsGradient.scale(momentum);
+    biasGradient.scale(momentum);
   }
 }

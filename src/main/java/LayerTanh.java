@@ -40,4 +40,9 @@ public class LayerTanh extends Layer {
   void applyGradient(double learningRate) {
 
   }
+
+  @Override
+  void applyGradient(double learningRate, double momentum) {
+
+  }
 }

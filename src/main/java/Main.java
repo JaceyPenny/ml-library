@@ -88,8 +88,6 @@ class Main {
     NeuralNetwork neuralNetwork = new NeuralNetwork();
     neuralNetwork.addFirstLayer(LayerType.LINEAR, 29, 20);
     neuralNetwork.addLayer(LayerType.TANH, 20);
-    neuralNetwork.addLayer(LayerType.LINEAR, 10);
-    neuralNetwork.addLayer(LayerType.TANH, 10);
     neuralNetwork.addLayer(LayerType.LINEAR, 4);
     neuralNetwork.addLayer(LayerType.TANH, 4);
 

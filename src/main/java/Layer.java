@@ -49,6 +49,8 @@ abstract class Layer {
 
   abstract void applyGradient(double learningRate);
 
+  abstract void applyGradient(double learningRate, double momentum);
+
   public String topologyString() {
     String name = getLayerType().toString();
     int weights = (this instanceof LayerLinear) ? this.getInputs() * getOutputs() + getOutputs() : 0;

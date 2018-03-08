@@ -5,10 +5,10 @@ import java.util.Random;
 
 public class NeuralNetwork extends SupervisedLearner {
   public static Random RANDOM = new Random();
-  public static double LEARNING_RATE = 0.03;
+  public static double LEARNING_RATE = 0.0001;
 
   private List<Layer> layers;
-
+  private double momentum = 0.0;
   private OutputStream outputStream;
 
   public NeuralNetwork() {
@@ -17,6 +17,10 @@ public class NeuralNetwork extends SupervisedLearner {
 
   public void setOutputStream(OutputStream outputStream) {
     this.outputStream = outputStream;
+  }
+
+  public void setMomentum(float momentum) {
+    this.momentum = momentum;
   }
 
   @Override
@@ -136,11 +140,11 @@ public class NeuralNetwork extends SupervisedLearner {
     train(features, labels, features.rows() / batchSize, batchSize);
   }
 
-  void train(Matrix features, Matrix labels, int repetitions, int stochastic) {
+  void train(Matrix features, Matrix labels, int repetitions, int rows) {
     shuffleData(features, labels);
 
     for (int i = 0; i < repetitions; i++) {
-      for (int j = 0; j < stochastic; j++) {
+      for (int j = 0; j < rows; j++) {
         int row = RANDOM.nextInt(features.rows());
 
         Vector input = features.row(row);
@@ -178,7 +182,7 @@ public class NeuralNetwork extends SupervisedLearner {
 
   private void updateWeights(double learningRate) {
     for (Layer layer : layers) {
-      layer.applyGradient(learningRate);
+      layer.applyGradient(learningRate, momentum);
     }
   }
 
