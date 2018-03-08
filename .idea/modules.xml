@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/linearregression.iml" filepath="$PROJECT_DIR$/.idea/modules/linearregression.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/linearregression_main.iml" filepath="$PROJECT_DIR$/.idea/modules/linearregression_main.iml" group="linearregression" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/linearregression_test.iml" filepath="$PROJECT_DIR$/.idea/modules/linearregression_test.iml" group="linearregression" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ml-library.iml" filepath="$PROJECT_DIR$/.idea/modules/ml-library.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ml-library_main.iml" filepath="$PROJECT_DIR$/.idea/modules/ml-library_main.iml" group="ml-library" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ml-library_test.iml" filepath="$PROJECT_DIR$/.idea/modules/ml-library_test.iml" group="ml-library" />
     </modules>
   </component>
 </project>
