@@ -1,8 +1,3 @@
-// ----------------------------------------------------------------
-// The contents of this file are distributed under the CC0 license.
-// See http://creativecommons.org/publicdomain/zero/1.0/
-// ----------------------------------------------------------------
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -61,7 +56,6 @@ public class Matrix {
     }
   }
 
-
   public Matrix(Json json) {
     int rowCount = json.size();
     int colCount = json.get(0).size();
@@ -75,7 +69,6 @@ public class Matrix {
       }
     }
   }
-
 
   /**
    * Marshals this object into a Json DOM
@@ -165,7 +158,6 @@ public class Matrix {
   public Metadata getMetadata() {
     return metadata;
   }
-
 
   public void printRow(double[] row, PrintWriter outputStream) {
     if (row.length != cols()) {

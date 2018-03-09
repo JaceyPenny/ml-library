@@ -1,4 +1,4 @@
-import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -9,18 +9,59 @@ public class NeuralNetwork extends SupervisedLearner {
 
   private List<Layer> layers;
   private double momentum = 0.0;
-  private OutputStream outputStream;
+
+  private int batchSize = 1;
+
+  private PrintWriter trainingPrintWriter;
+  private PrintWriter testingPrintWriter;
+
+  private MetricTracker trainingMetricTracker;
+  private MetricTracker testingMetricTracker;
 
   public NeuralNetwork() {
     this.layers = new ArrayList<>();
+    this.trainingMetricTracker = new MetricTracker();
+    this.testingMetricTracker = new MetricTracker();
   }
 
-  public void setOutputStream(OutputStream outputStream) {
-    this.outputStream = outputStream;
+  public NeuralNetwork copy() {
+    NeuralNetwork newNeuralNetwork = new NeuralNetwork();
+
+    if (layers.size() > 0) {
+      Layer firstLayer = layers.get(0);
+      newNeuralNetwork.addFirstLayer(
+          firstLayer.getLayerType(), firstLayer.getInputs(), firstLayer.getOutputs());
+
+      for (int i = 1; i < layers.size(); i++) {
+        Layer nextLayer = layers.get(i);
+        newNeuralNetwork.addLayer(nextLayer.getLayerType(), nextLayer.getOutputs());
+      }
+    }
+
+    return newNeuralNetwork;
   }
 
-  public void setMomentum(float momentum) {
+  public void setTrainingPrintWriter(PrintWriter trainingPrintWriter) {
+    this.trainingPrintWriter = trainingPrintWriter;
+  }
+
+  public void setTestingPrintWriter(PrintWriter testingPrintWriter) {
+    this.testingPrintWriter = testingPrintWriter;
+  }
+
+  public void setMomentum(double momentum) {
     this.momentum = momentum;
+    this.batchSize = 1;
+  }
+
+  public void setBatchSize(int batchSize) {
+    this.momentum = 0;
+    this.batchSize = batchSize;
+  }
+
+  public void resetMetrics() {
+    this.trainingMetricTracker.reset();
+    this.testingMetricTracker.reset();
   }
 
   @Override
@@ -58,8 +99,6 @@ public class NeuralNetwork extends SupervisedLearner {
     }
 
     int previousOutputs = layers.get(layers.size() - 1).getOutputs();
-
-
     addLayer(layerType, previousOutputs, outputs);
   }
 
@@ -102,8 +141,12 @@ public class NeuralNetwork extends SupervisedLearner {
     return Math.sqrt(totalError / repetitions / features.rows());
   }
 
+  public int countMisclassifications(Matrix features, Matrix labels) {
+    return countMisclassifications(features, labels, false);
+  }
+
   @Override
-  int countMisclassifications(Matrix features, Matrix labels) {
+  int countMisclassifications(Matrix features, Matrix labels, boolean isTraining) {
     int misclassifications = 0;
 
     for (int row = 0; row < features.rows(); row++) {
@@ -115,7 +158,19 @@ public class NeuralNetwork extends SupervisedLearner {
       }
     }
 
+    outputMisclassifications((double) misclassifications / features.rows(), isTraining);
     return misclassifications;
+  }
+
+  private void outputMisclassifications(double misclassifications, boolean isTraining) {
+    if (trainingPrintWriter != null && testingPrintWriter != null && trainingMetricTracker != null) {
+      PrintWriter writer = (isTraining) ? trainingPrintWriter : testingPrintWriter;
+      MetricTracker metricTracker = (isTraining) ? trainingMetricTracker : testingMetricTracker;
+
+      writer.printf("%d,%.3f,%.5f\n",
+          metricTracker.getSteps(), metricTracker.getTime() / 1000.0, misclassifications);
+      metricTracker.updateSteps(batchSize);
+    }
   }
 
   private void trainLinear(Matrix features, Matrix labels) {
@@ -130,6 +185,42 @@ public class NeuralNetwork extends SupervisedLearner {
   @Override
   void train(Matrix features, Matrix labels) {
     trainStochastic(features, labels);
+  }
+
+  void trainSingleBatch(Matrix features, Matrix labels, int batchSize, int currentBatch) {
+    trainingMetricTracker.start();
+    testingMetricTracker.start();
+
+    for (int i = currentBatch * batchSize; i < currentBatch * batchSize + batchSize; i++) {
+      Vector input = features.row(i);
+      Vector output = labels.row(i);
+
+      predict(input);
+      backPropagate(output);
+      updateGradient(input);
+    }
+
+    updateWeights(LEARNING_RATE);
+
+    trainingMetricTracker.pause();
+    testingMetricTracker.pause();
+  }
+
+  void  trainStochastic(Matrix features, Matrix labels, int row) {
+    trainingMetricTracker.start();
+    testingMetricTracker.start();
+
+    Vector input = features.row(row);
+    Vector output = labels.row(row);
+
+    predict(input);
+    backPropagate(output);
+    updateGradient(input);
+
+    updateWeights(LEARNING_RATE);
+
+    trainingMetricTracker.pause();
+    testingMetricTracker.pause();
   }
 
   void trainStochastic(Matrix features, Matrix labels) {

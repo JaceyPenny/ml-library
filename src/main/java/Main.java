@@ -1,10 +1,14 @@
-// ----------------------------------------------------------------
-// The contents of this file are distributed under the CC0 license.
-// See http://creativecommons.org/publicdomain/zero/1.0/
-// ----------------------------------------------------------------
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 class Main {
   private static int EPOCHS = 10;
+  private static long EXECUTION_TIMESTAMP = System.currentTimeMillis();
+
+  private static int BATCH_SIZE = 5;
+  private static double MOMENTUM = 0.8;
 
   private static void runAssignment1() {
     Matrix features = Matrix.fromARFF("data/housing_features.arff");
@@ -85,23 +89,88 @@ class Main {
     Matrix testingFeatures = dataSet.copyBlock(trainingRows, 0, testingRows, 29);
     Matrix testingLabels = dataSet.copyBlock(trainingRows, 29, testingRows, 1).toOneHot();
 
-    NeuralNetwork neuralNetwork = new NeuralNetwork();
-    neuralNetwork.addFirstLayer(LayerType.LINEAR, 29, 20);
-    neuralNetwork.addLayer(LayerType.TANH, 20);
-    neuralNetwork.addLayer(LayerType.LINEAR, 4);
-    neuralNetwork.addLayer(LayerType.TANH, 4);
+    NeuralNetwork stochasticNeuralNetwork = new NeuralNetwork();
+    stochasticNeuralNetwork.addFirstLayer(LayerType.LINEAR, 29, 20);
+    stochasticNeuralNetwork.addLayer(LayerType.TANH, 20);
+    stochasticNeuralNetwork.addLayer(LayerType.LINEAR, 4);
+    stochasticNeuralNetwork.addLayer(LayerType.TANH, 4);
 
-    neuralNetwork.initializeWeights();
+    NeuralNetwork miniBatchNeuralNetwork = stochasticNeuralNetwork.copy();
 
-    int misclassifications = neuralNetwork.countMisclassifications(testingFeatures, testingLabels);
+    stochasticNeuralNetwork.initializeWeights();
+    miniBatchNeuralNetwork.initializeWeights();
 
-    System.out.printf("Baseline; Misclassifications: %d / %d\n", misclassifications, testingLabels.rows());
+    PrintWriter stochasticMisclassificationsTraining;
+    PrintWriter stochasticMisclassificationsTesting;
 
-    for (int i = 0; i < EPOCHS; i++) {
-      neuralNetwork.trainMiniBatch(trainingFeatures, trainingLabels, 20);
-      misclassifications = neuralNetwork.countMisclassifications(testingFeatures, testingLabels);
-      System.out.printf("Epoch %d; Misclassifications: %d / %d\n", i + 1, misclassifications, testingLabels.rows());
+    PrintWriter miniBatchMisclassificationsTraining;
+    PrintWriter miniBatchMisclassificationsTesting;
+
+    try {
+      stochasticMisclassificationsTraining = getPrintWriterWithName("stochastic_mc_train.csv");
+      stochasticMisclassificationsTesting = getPrintWriterWithName("stochastic_mc_test.csv");
+
+      stochasticMisclassificationsTraining.println("steps,time,misclassifications");
+      stochasticMisclassificationsTesting.println("steps,time,misclassifications");
+
+      miniBatchMisclassificationsTraining = getPrintWriterWithName("minibatch_mc_train.csv");
+      miniBatchMisclassificationsTesting = getPrintWriterWithName("minibatch_mc_test.csv");
+      miniBatchMisclassificationsTraining.println("steps,time,misclassifications");
+      miniBatchMisclassificationsTesting.println("steps,time,misclassifications");
+    } catch (IOException ioException) {
+      System.err.println("There was an error creating your files.");
+      return;
     }
+
+    // Run stochastic
+    System.out.println("Running stochastic process...");
+    stochasticNeuralNetwork.printTopology();
+    stochasticNeuralNetwork.setTrainingPrintWriter(stochasticMisclassificationsTraining);
+    stochasticNeuralNetwork.setTestingPrintWriter(stochasticMisclassificationsTesting);
+    stochasticNeuralNetwork.resetMetrics();
+    stochasticNeuralNetwork.setMomentum(MOMENTUM);
+    stochasticNeuralNetwork.countMisclassifications(trainingFeatures, trainingLabels, true);
+    stochasticNeuralNetwork.countMisclassifications(testingFeatures, testingLabels, false);
+
+    for (int i = 0; i < trainingFeatures.rows(); i++) {
+      // Train with exactly one row
+      stochasticNeuralNetwork.trainStochastic(trainingFeatures, trainingLabels, i);
+
+      stochasticNeuralNetwork.countMisclassifications(trainingFeatures, trainingLabels, true);
+      stochasticNeuralNetwork.countMisclassifications(testingFeatures, testingLabels, false);
+    }
+
+    // Run mini batch
+    System.out.println("Running mini batch process...");
+    miniBatchNeuralNetwork.printTopology();
+    miniBatchNeuralNetwork.setTrainingPrintWriter(miniBatchMisclassificationsTraining);
+    miniBatchNeuralNetwork.setTestingPrintWriter(miniBatchMisclassificationsTesting);
+    miniBatchNeuralNetwork.resetMetrics();
+    miniBatchNeuralNetwork.setBatchSize(BATCH_SIZE);
+    miniBatchNeuralNetwork.countMisclassifications(trainingFeatures, trainingLabels, true);
+    miniBatchNeuralNetwork.countMisclassifications(testingFeatures, testingLabels, false);
+
+    for (int i = 0; i < trainingFeatures.rows() / BATCH_SIZE; i++) {
+      miniBatchNeuralNetwork.trainSingleBatch(trainingFeatures, trainingLabels, BATCH_SIZE, i);
+
+      miniBatchNeuralNetwork.countMisclassifications(trainingFeatures, trainingLabels, true);
+      miniBatchNeuralNetwork.countMisclassifications(testingFeatures, testingLabels, false);
+    }
+
+    stochasticMisclassificationsTraining.close();
+    stochasticMisclassificationsTesting.close();
+    miniBatchMisclassificationsTraining.close();
+    miniBatchMisclassificationsTesting.close();
+  }
+
+  private static PrintWriter getPrintWriterWithName(String fileName)
+      throws IOException {
+    File outputDirectory = new File("output/" + EXECUTION_TIMESTAMP);
+    outputDirectory.mkdirs();
+    File outputFile = new File("output/" + EXECUTION_TIMESTAMP + "/" + fileName);
+    outputFile.createNewFile();
+
+    return new PrintWriter(new FileOutputStream(outputFile));
   }
 
   public static void main(String[] args) {

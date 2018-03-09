@@ -57,7 +57,7 @@ abstract class SupervisedLearner {
   /**
    * Measures the misclassificaions with the provided test data
    */
-  int countMisclassifications(Matrix features, Matrix labels) {
+  int countMisclassifications(Matrix features, Matrix labels, boolean isTraining) {
     if (features.rows() != labels.rows())
       throw new IllegalArgumentException("Mismatching number of rows");
     int mis = 0;
