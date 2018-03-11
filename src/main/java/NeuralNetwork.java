@@ -187,7 +187,7 @@ public class NeuralNetwork extends SupervisedLearner {
     trainStochastic(features, labels);
   }
 
-  void trainSingleBatch(Matrix features, Matrix labels, int batchSize, int currentBatch) {
+  void trainSingleMiniBatch(Matrix features, Matrix labels, int batchSize, int currentBatch) {
     trainingMetricTracker.start();
     testingMetricTracker.start();
 

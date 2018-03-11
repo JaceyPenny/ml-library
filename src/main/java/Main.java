@@ -151,7 +151,7 @@ class Main {
     miniBatchNeuralNetwork.countMisclassifications(testingFeatures, testingLabels, false);
 
     for (int i = 0; i < trainingFeatures.rows() / BATCH_SIZE; i++) {
-      miniBatchNeuralNetwork.trainSingleBatch(trainingFeatures, trainingLabels, BATCH_SIZE, i);
+      miniBatchNeuralNetwork.trainSingleMiniBatch(trainingFeatures, trainingLabels, BATCH_SIZE, i);
 
       miniBatchNeuralNetwork.countMisclassifications(trainingFeatures, trainingLabels, true);
       miniBatchNeuralNetwork.countMisclassifications(testingFeatures, testingLabels, false);
