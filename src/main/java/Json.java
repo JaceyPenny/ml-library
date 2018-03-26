@@ -199,7 +199,7 @@ abstract class Json {
     }
 
     char peek() {
-      return str.charAt(pos);
+      return (pos >= str.length()) ? 0 : str.charAt(pos);
     }
 
     void advance(int n) {

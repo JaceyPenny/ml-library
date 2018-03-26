@@ -3,6 +3,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * This stores a matrix, A.K.A. data set, A.K.A. table. Each element is
@@ -1298,5 +1299,26 @@ public class Matrix {
     newMatrix.copyBlock(0, 0, other, rowsBefore, 0, foldSize, other.cols());
 
     return newMatrix;
+  }
+
+  public static void shuffleMatrices(Matrix... matrices) {
+    if (matrices.length == 0) {
+      return;
+    }
+
+    final int expectedHeight = matrices[0].rows();
+    if (!Arrays.stream(matrices).allMatch((matrix) -> matrix.rows() == expectedHeight)) {
+      throw new IllegalArgumentException("All supplied matrices must have the same height.");
+    }
+
+    Random random = new Random();
+    for (int i = matrices[0].rows(); i >= 2; i--) {
+      int r = random.nextInt(i);
+
+      // Swap the same rows in all matrices
+      for (Matrix matrix : matrices) {
+        matrix.swapRows(i - 1, r);
+      }
+    }
   }
 }

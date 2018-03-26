@@ -3,11 +3,17 @@
 // See http://creativecommons.org/publicdomain/zero/1.0/
 // ----------------------------------------------------------------
 
-class BaselineLearner extends SupervisedLearner {
+class BaselineLearner implements SupervisedLearner {
   double[] mode;
 
-  String name() {
+  @Override
+  public String name() {
     return "Baseline";
+  }
+
+  @Override
+  public boolean isValid() {
+    return true;
   }
 
   void train(Matrix features, Matrix labels) {
@@ -20,12 +26,8 @@ class BaselineLearner extends SupervisedLearner {
     }
   }
 
-  Vector predict(Vector in) {
-    return new Vector(mode);
-  }
-
   @Override
-  double crossValidation(int folds, int repetitions, Matrix features, Matrix labels) {
-    return 0;
+  public Vector predict(Vector in) {
+    return new Vector(mode);
   }
 }

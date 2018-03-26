@@ -2,13 +2,17 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Random;
 
 class Main {
+  public static final Random RANDOM = new Random();
+
   private static int EPOCHS = 10;
   private static long EXECUTION_TIMESTAMP = System.currentTimeMillis();
 
   private static int BATCH_SIZE = 5;
   private static double MOMENTUM = 0.8;
+  public static double LEARNING_RATE = 0.0001;
 
   private static void runAssignment1() {
     Matrix features = Matrix.fromARFF("data/housing_features.arff");
@@ -17,12 +21,15 @@ class Main {
     NeuralNetwork neuralNetwork = new NeuralNetwork();
     neuralNetwork.addFirstLayer(LayerType.LINEAR, features.cols(), labels.cols());
 
-    double finalError = neuralNetwork.crossValidation(10, 5, features, labels);
+    LearnerEvaluator<NeuralNetwork> evaluator = new LearnerEvaluator<>(neuralNetwork);
+    double finalError = evaluator.crossValidation(features, labels, 10, 5);
     System.out.println(finalError);
   }
 
   private static void runAssignment2() {
     NeuralNetwork neuralNetwork = new NeuralNetwork();
+    neuralNetwork.setLearningRate(0.03);
+    neuralNetwork.setMomentum(0);
 
     neuralNetwork.addFirstLayer(LayerType.LINEAR, 784, 80);
     neuralNetwork.addLayer(LayerType.TANH, 80);
@@ -59,19 +66,22 @@ class Main {
 
     neuralNetwork.initializeWeights();
 
+    LearnerEvaluator<NeuralNetwork> evaluator =
+        new LearnerEvaluator<>(neuralNetwork, LearnerEvaluator.TrainingType.BASIC);
+
     // Run a test to show baseline accuracy
-    int misclassifications = neuralNetwork.countMisclassifications(testingFeatures, testingLabels);
+    int misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
     System.out.printf("Before training. Misclassifications: %d\n", misclassifications);
 
     // Measure and report accuracy
     for (int i = 0; i < EPOCHS; i++) {
       long startTime = System.currentTimeMillis();
-      neuralNetwork.train(trainingFeatures, trainingLabels);
+      evaluator.train(trainingFeatures, trainingLabels);
       long endTime = System.currentTimeMillis();
 
       System.out.printf("Finished training epoch %d: %d ms. Misclassifications: ", i + 1, endTime - startTime);
 
-      misclassifications = neuralNetwork.countMisclassifications(testingFeatures, testingLabels);
+      misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
       System.out.println(misclassifications);
     }
   }
@@ -94,8 +104,11 @@ class Main {
     stochasticNeuralNetwork.addLayer(LayerType.TANH, 20);
     stochasticNeuralNetwork.addLayer(LayerType.LINEAR, 4);
     stochasticNeuralNetwork.addLayer(LayerType.TANH, 4);
+    stochasticNeuralNetwork.setMomentum(MOMENTUM);
+    stochasticNeuralNetwork.setLearningRate(LEARNING_RATE);
 
     NeuralNetwork miniBatchNeuralNetwork = stochasticNeuralNetwork.copy();
+    miniBatchNeuralNetwork.setMomentum(0);
 
     stochasticNeuralNetwork.initializeWeights();
     miniBatchNeuralNetwork.initializeWeights();
@@ -125,36 +138,45 @@ class Main {
     // Run stochastic
     System.out.println("Running stochastic process...");
     stochasticNeuralNetwork.printTopology();
-    stochasticNeuralNetwork.setTrainingPrintWriter(stochasticMisclassificationsTraining);
-    stochasticNeuralNetwork.setTestingPrintWriter(stochasticMisclassificationsTesting);
-    stochasticNeuralNetwork.resetMetrics();
-    stochasticNeuralNetwork.setMomentum(MOMENTUM);
-    stochasticNeuralNetwork.countMisclassifications(trainingFeatures, trainingLabels, true);
-    stochasticNeuralNetwork.countMisclassifications(testingFeatures, testingLabels, false);
 
+    LearnerEvaluator<NeuralNetwork> stochasticEvaluator = new LearnerEvaluator<>(
+        stochasticNeuralNetwork, LearnerEvaluator.TrainingType.STOCHASTIC);
+    stochasticEvaluator.setTrainingPrintWriter(stochasticMisclassificationsTraining);
+    stochasticEvaluator.setTestingPrintWriter(stochasticMisclassificationsTesting);
+    stochasticEvaluator.resetMetrics();
+
+    // Gather statistics before training
+    stochasticEvaluator.countMisclassifications(trainingFeatures, trainingLabels, true);
+    stochasticEvaluator.countMisclassifications(testingFeatures, testingLabels, false);
+
+    // Begin training
     for (int i = 0; i < trainingFeatures.rows(); i++) {
       // Train with exactly one row
-      stochasticNeuralNetwork.trainStochastic(trainingFeatures, trainingLabels, i);
+      stochasticEvaluator.trainSingleRow(trainingFeatures, trainingLabels, i);
 
-      stochasticNeuralNetwork.countMisclassifications(trainingFeatures, trainingLabels, true);
-      stochasticNeuralNetwork.countMisclassifications(testingFeatures, testingLabels, false);
+      stochasticEvaluator.countMisclassifications(trainingFeatures, trainingLabels, true);
+      stochasticEvaluator.countMisclassifications(testingFeatures, testingLabels, false);
     }
 
     // Run mini batch
     System.out.println("Running mini batch process...");
     miniBatchNeuralNetwork.printTopology();
-    miniBatchNeuralNetwork.setTrainingPrintWriter(miniBatchMisclassificationsTraining);
-    miniBatchNeuralNetwork.setTestingPrintWriter(miniBatchMisclassificationsTesting);
-    miniBatchNeuralNetwork.resetMetrics();
-    miniBatchNeuralNetwork.setBatchSize(BATCH_SIZE);
-    miniBatchNeuralNetwork.countMisclassifications(trainingFeatures, trainingLabels, true);
-    miniBatchNeuralNetwork.countMisclassifications(testingFeatures, testingLabels, false);
+
+    LearnerEvaluator<NeuralNetwork> miniBatchEvaluator = new LearnerEvaluator<>(
+        miniBatchNeuralNetwork, LearnerEvaluator.TrainingType.MINI_BATCH);
+    miniBatchEvaluator.setTrainingPrintWriter(miniBatchMisclassificationsTraining);
+    miniBatchEvaluator.setTestingPrintWriter(miniBatchMisclassificationsTesting);
+    miniBatchEvaluator.resetMetrics();
+    miniBatchEvaluator.setBatchSize(BATCH_SIZE);
+
+    miniBatchEvaluator.countMisclassifications(trainingFeatures, trainingLabels, true);
+    miniBatchEvaluator.countMisclassifications(testingFeatures, testingLabels, false);
 
     for (int i = 0; i < trainingFeatures.rows() / BATCH_SIZE; i++) {
-      miniBatchNeuralNetwork.trainSingleMiniBatch(trainingFeatures, trainingLabels, BATCH_SIZE, i);
+      miniBatchEvaluator.trainSingleMiniBatch(trainingFeatures, trainingLabels, BATCH_SIZE, i);
 
-      miniBatchNeuralNetwork.countMisclassifications(trainingFeatures, trainingLabels, true);
-      miniBatchNeuralNetwork.countMisclassifications(testingFeatures, testingLabels, false);
+      miniBatchEvaluator.countMisclassifications(trainingFeatures, trainingLabels, true);
+      miniBatchEvaluator.countMisclassifications(testingFeatures, testingLabels, false);
     }
 
     stochasticMisclassificationsTraining.close();

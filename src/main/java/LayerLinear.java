@@ -38,7 +38,7 @@ public class LayerLinear extends Layer {
   }
 
   public void initializeWeights() {
-    fillAll(() -> Math.max(0.03, 1.0 / getInputs()) * NeuralNetwork.RANDOM.nextGaussian());
+    fillAll(() -> Math.max(0.03, 1.0 / getInputs()) * Main.RANDOM.nextGaussian());
   }
 
   private void fillAll(Supplier<Double> supplier) {
