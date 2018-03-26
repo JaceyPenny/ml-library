@@ -1,6 +1,6 @@
-public class LayerTanh extends Layer {
+public class TanhLayer extends Layer {
 
-  public LayerTanh(int inputs) {
+  public TanhLayer(int inputs) {
     super(inputs, inputs);
   }
 

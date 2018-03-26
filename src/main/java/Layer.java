@@ -53,7 +53,7 @@ abstract class Layer {
 
   public String topologyString() {
     String name = getLayerType().toString();
-    int weights = (this instanceof LayerLinear) ? this.getInputs() * getOutputs() + getOutputs() : 0;
+    int weights = (this instanceof LinearLayer) ? this.getInputs() * getOutputs() + getOutputs() : 0;
 
     return String.format("[%s: %d->%d, Weights=%d]", name, getInputs(), getOutputs(), weights);
   }

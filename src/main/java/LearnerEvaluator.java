@@ -194,7 +194,7 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
 
     NeuralNetwork neuralNetwork = (NeuralNetwork) learner;
     if (!neuralNetwork.isLinearNetwork()) {
-      throw new IllegalStateException("Your NeuralNetwork must have exactly one LayerLinear");
+      throw new IllegalStateException("Your NeuralNetwork must have exactly one LinearLayer");
     }
 
     if (features.rows() != labels.rows()) {
@@ -202,7 +202,7 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
           "Your input features and labels must have the same number of rows.");
     }
 
-    LayerLinear layer = (LayerLinear) neuralNetwork.getLayers().get(0);
+    LinearLayer layer = (LinearLayer) neuralNetwork.getLayers().get(0);
     layer.ordinaryLeastSquares(features, labels);
   }
 

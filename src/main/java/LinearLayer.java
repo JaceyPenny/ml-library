@@ -1,13 +1,13 @@
 import java.util.function.Supplier;
 
-public class LayerLinear extends Layer {
+public class LinearLayer extends Layer {
   private Matrix weights;
   private Vector bias;
 
   private Matrix weightsGradient;
   private Vector biasGradient;
 
-  public LayerLinear(int inputs, int outputs) {
+  public LinearLayer(int inputs, int outputs) {
     super(inputs, outputs);
 
     weights = new Matrix(outputs, inputs);

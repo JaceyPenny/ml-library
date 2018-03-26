@@ -6,7 +6,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(JUnit4.class)
-public class LayerLinearTest extends BaseTest {
+public class LinearLayerTest extends BaseTest {
 
   @Test
   public void activate() {
@@ -17,31 +17,31 @@ public class LayerLinearTest extends BaseTest {
 
     Vector bias = new Vector(new double[]{1, 5});
 
-    LayerLinear layerLinear = new LayerLinear(3, 2);
-    layerLinear.setWeights(weights);
-    layerLinear.setBias(bias);
+    LinearLayer linearLayer = new LinearLayer(3, 2);
+    linearLayer.setWeights(weights);
+    linearLayer.setBias(bias);
 
-    layerLinear.activate(x);
+    linearLayer.activate(x);
 
     Vector expectedResult = new Vector(new double[]{9, 6});
 
-    assertEquals(expectedResult,  layerLinear.getActivation());
+    assertEquals(expectedResult,  linearLayer.getActivation());
   }
 
   @Test
   public void backPropagate() {
-    LayerLinear layerLinear = new LayerLinear(3, 2);
+    LinearLayer linearLayer = new LinearLayer(3, 2);
     Vector weightsVector = new Vector(new double[] {1, 2, 3, 2, 1, 0});
     Matrix weights = Matrix.deserialize(weightsVector, 2, 3);
     Vector bias = new Vector(new double[] {1, 5});
     Vector blame = new Vector(new double[] {0.75, 2});
 
-    layerLinear.setWeights(weights);
-    layerLinear.setBias(bias);
-    layerLinear.setBlame(blame);
+    linearLayer.setWeights(weights);
+    linearLayer.setBias(bias);
+    linearLayer.setBlame(blame);
 
     Vector expectedPreviousBlame = new Vector(new double[] {4.75, 3.5, 2.25});
-    Vector actualPreviousBlame = layerLinear.backPropagate();
+    Vector actualPreviousBlame = linearLayer.backPropagate();
 
     assertEquals(expectedPreviousBlame, actualPreviousBlame);
   }
@@ -65,22 +65,22 @@ public class LayerLinearTest extends BaseTest {
     Matrix randomWeights = getRandomMatrix(y_features, x_features);
     Vector randomBias = getRandomVector(y_features);
 
-    LayerLinear layerLinear = new LayerLinear(x_features, y_features);
-    layerLinear.setWeights(randomWeights);
-    layerLinear.setBias(randomBias);
+    LinearLayer linearLayer = new LinearLayer(x_features, y_features);
+    linearLayer.setWeights(randomWeights);
+    linearLayer.setBias(randomBias);
 
     for (int i = 0; i < data_rows; i++) {
-      layerLinear.activate(X.row(i));
-      Vector output_y = layerLinear.getActivation();
+      linearLayer.activate(X.row(i));
+      Vector output_y = linearLayer.getActivation();
       Y.setRow(i, output_y);
     }
 
     addRandomNoiseToMatrix(Y, standardDeviation);
 
-    layerLinear.ordinaryLeastSquares(X, Y);
+    linearLayer.ordinaryLeastSquares(X, Y);
 
-    Matrix newWeights = layerLinear.getWeights();
-    Vector newBias = layerLinear.getBias();
+    Matrix newWeights = linearLayer.getWeights();
+    Vector newBias = linearLayer.getBias();
 
     double error = randomWeights.errorAgainst(newWeights);
     error += randomBias.errorAgainst(newBias);
