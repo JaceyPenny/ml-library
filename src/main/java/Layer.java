@@ -1,6 +1,6 @@
 abstract class Layer {
   public enum LayerType {
-    LINEAR, TANH, LEAKY_RECTIFIER, CONVOLUTION
+    LINEAR, TANH, LEAKY_RECTIFIER, CONVOLUTION, MAX_POOLING_2D
   }
 
   private int inputs;

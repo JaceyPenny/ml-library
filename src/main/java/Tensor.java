@@ -34,6 +34,34 @@ public class Tensor extends Vector {
     System.arraycopy(other.dimensions, 0, dimensions, 0, other.dimensions.length);
   }
 
+  private int calculateIndex(int... position) {
+    if (position.length != this.dimensions.length) {
+      throw new IllegalArgumentException("Invalid number of dimensions for position");
+    }
+
+    int index = position[0];
+    int dimensionMultiplier = 1;
+
+    for (int i = 1; i < dimensions.length; i++) {
+      int coordinate = position[i];
+      dimensionMultiplier *= dimensions[i];
+
+      index += coordinate * dimensionMultiplier;
+    }
+
+    return index;
+  }
+
+  public double get(int... position) {
+    int index = calculateIndex(position);
+    return super.get(index);
+  }
+
+  public void set(double value, int... position) {
+    int index = calculateIndex(position);
+    super.set(index, value);
+  }
+
   static void convolve(Tensor in, Tensor filter, Tensor out) {
     convolve(in, filter, out, false);
   }

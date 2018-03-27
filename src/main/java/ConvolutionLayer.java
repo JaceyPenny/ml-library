@@ -16,9 +16,9 @@ public class ConvolutionLayer extends Layer {
   public ConvolutionLayer(int[] inputDimensions, int[] filterDimensions, int[] outputDimensions) {
     super(Tensor.countElements(inputDimensions), Tensor.countElements(outputDimensions));
 
-    this.inputDimensions = inputDimensions; // 2D => 3D
-    this.filterDimensions = filterDimensions; // 3D => 4D
-    this.outputDimensions = outputDimensions; // 4D => 4D
+    this.inputDimensions = inputDimensions;
+    this.filterDimensions = filterDimensions;
+    this.outputDimensions = outputDimensions;
 
     normalizeDimensions();
 
@@ -39,6 +39,7 @@ public class ConvolutionLayer extends Layer {
     int[] filterDimensions = new int[maxDimensions];
     int[] outputDimensions = new int[maxDimensions];
 
+    // Set the size of each dimension to 1
     Arrays.fill(inputDimensions, 1);
     Arrays.fill(filterDimensions, 1);
     Arrays.fill(outputDimensions, 1);
