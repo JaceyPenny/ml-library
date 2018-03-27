@@ -5,6 +5,11 @@ public class TanhLayer extends Layer {
   }
 
   @Override
+  public TanhLayer copy() {
+    return new TanhLayer(getInputs());
+  }
+
+  @Override
   public LayerType getLayerType() {
     return LayerType.TANH;
   }

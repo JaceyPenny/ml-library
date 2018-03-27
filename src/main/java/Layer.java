@@ -22,6 +22,8 @@ abstract class Layer {
   public void initialize() {
   }
 
+  public abstract Layer copy();
+
   public int getInputs() {
     return inputs;
   }

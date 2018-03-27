@@ -53,6 +53,11 @@ public class ConvolutionLayer extends Layer {
   }
 
   @Override
+  public ConvolutionLayer copy() {
+    return new ConvolutionLayer(inputDimensions, filterDimensions, outputDimensions);
+  }
+
+  @Override
   public LayerType getLayerType() {
     return LayerType.CONVOLUTION;
   }

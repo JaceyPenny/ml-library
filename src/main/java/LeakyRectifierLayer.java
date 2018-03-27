@@ -4,6 +4,10 @@ public class LeakyRectifierLayer extends Layer {
     super(inputs, inputs);
   }
 
+  public LeakyRectifierLayer copy() {
+    return new LeakyRectifierLayer(getInputs());
+  }
+
   @Override
   public LayerType getLayerType() {
     return LayerType.LEAKY_RECTIFIER;

@@ -19,7 +19,7 @@ class Main {
     Matrix labels = Matrix.fromARFF("data/housing_labels.arff");
 
     NeuralNetwork neuralNetwork = new NeuralNetwork();
-    neuralNetwork.addFirstLayer(Layer.LayerType.LINEAR, features.cols(), labels.cols());
+    neuralNetwork.addLayer(new LinearLayer(features.cols(), labels.cols()));
 
     LearnerEvaluator<NeuralNetwork> evaluator = new LearnerEvaluator<>(neuralNetwork);
     double finalError = evaluator.crossValidation(features, labels, 10, 5);
@@ -31,12 +31,12 @@ class Main {
     neuralNetwork.setLearningRate(0.03);
     neuralNetwork.setMomentum(0);
 
-    neuralNetwork.addFirstLayer(Layer.LayerType.LINEAR, 784, 80);
-    neuralNetwork.addLayer(Layer.LayerType.TANH, 80);
-    neuralNetwork.addLayer(Layer.LayerType.LINEAR, 30);
-    neuralNetwork.addLayer(Layer.LayerType.TANH, 30);
-    neuralNetwork.addLayer(Layer.LayerType.LINEAR, 10);
-    neuralNetwork.addLayer(Layer.LayerType.TANH, 10);
+    neuralNetwork.addLayer(new LinearLayer(784, 80));
+    neuralNetwork.addLayer(new TanhLayer(80));
+    neuralNetwork.addLayer(new LinearLayer(80, 30));
+    neuralNetwork.addLayer(new TanhLayer(30));
+    neuralNetwork.addLayer(new LinearLayer(30, 10));
+    neuralNetwork.addLayer(new TanhLayer(10));
 
     // Load the training data
     long startMillis = System.currentTimeMillis();
@@ -100,10 +100,11 @@ class Main {
     Matrix testingLabels = dataSet.copyBlock(trainingRows, 29, testingRows, 1).toOneHot();
 
     NeuralNetwork stochasticNeuralNetwork = new NeuralNetwork();
-    stochasticNeuralNetwork.addFirstLayer(Layer.LayerType.LINEAR, 29, 20);
-    stochasticNeuralNetwork.addLayer(Layer.LayerType.TANH, 20);
-    stochasticNeuralNetwork.addLayer(Layer.LayerType.LINEAR, 4);
-    stochasticNeuralNetwork.addLayer(Layer.LayerType.TANH, 4);
+    stochasticNeuralNetwork.addLayer(new LinearLayer(29, 20));
+    stochasticNeuralNetwork.addLayer(new TanhLayer(20));
+    stochasticNeuralNetwork.addLayer(new LinearLayer(20, 4));
+    stochasticNeuralNetwork.addLayer(new TanhLayer(4));
+
     stochasticNeuralNetwork.setMomentum(MOMENTUM);
     stochasticNeuralNetwork.setLearningRate(LEARNING_RATE);
 

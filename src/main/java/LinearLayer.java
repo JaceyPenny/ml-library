@@ -42,6 +42,11 @@ public class LinearLayer extends Layer {
     fillAll(() -> Math.max(0.03, 1.0 / getInputs()) * Main.RANDOM.nextGaussian());
   }
 
+  @Override
+  public LinearLayer copy() {
+    return new LinearLayer(getInputs(), getOutputs());
+  }
+
   private void fillAll(Supplier<Double> supplier) {
     weights.fill(supplier);
     bias.fill(supplier);
