@@ -1,3 +1,4 @@
+import org.junit.ComparisonFailure;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -27,6 +28,8 @@ public class ConvolutionLayerTest extends BaseTest {
     Tensor filter = new Tensor(filterVector, new int[]{3, 3, 2});
     testLayer.setFilter(filter);
 
+    testLayer.setBias(new Vector(new double[]{0.0, 0.1}));
+
     Vector inputVector = new Vector(new double[]{
         0, 0.1, 0.2, 0.3,
         0.4, 0.5, 0.6, 0.7,
@@ -38,22 +41,31 @@ public class ConvolutionLayerTest extends BaseTest {
     testLayer.activate(input);
 
     Vector expectedActivationVector = new Vector(new double[]{
+        0.083, 0.139, 0.178, 0.121,
+        0.198, 0.303, 0.348, 0.225,
+        0.33, 0.483, 0.528, 0.333,
+        0.181, 0.253, 0.274, 0.163,
+
         0.283, 0.419, 0.518, 0.401,
         0.568, 0.853, 0.988, 0.715,
         0.94, 1.393, 1.528, 1.063,
         0.701, 1.013, 1.094, 0.763,
-
-        0.083, 0.139, 0.178, 0.121,
-        0.198, 0.303, 0.348, 0.225,
-        0.33, 0.483, 0.528, 0.333,
-        0.181, 0.253, 0.274, 0.163
     });
     Tensor expectedActivation = new Tensor(expectedActivationVector, new int[]{4, 4, 2});
-
-    assertEquals(expectedActivation, testLayer.getActivation());
+    assertVectorEquals(expectedActivation, testLayer.getActivation(), 1e-6);
   }
 
-  private static void assertActivationEquals(Vector first, Vector second) throws AssertionError {
+  private void assertVectorEquals(Vector expected, Vector actual, double tolerance)
+      throws AssertionError {
+    if (expected.size() != actual.size()) {
+      throw new ComparisonFailure(
+          "Sizes mismatch.", Integer.toString(expected.size()), Integer.toString(actual.size()));
+    }
 
+    for (int i = 0; i < expected.size(); i++) {
+      if (Math.abs(expected.get(i) - actual.get(i)) > tolerance) {
+        throw new ComparisonFailure("Values do not match", expected.toString(), actual.toString());
+      }
+    }
   }
 }

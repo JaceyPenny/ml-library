@@ -190,6 +190,12 @@ public class Vector {
     }
   }
 
+  public void addScalar(double scalar) {
+    for (int i = 0; i < length; i++) {
+      set(i, get(i) + scalar);
+    }
+  }
+
   public double dotProduct(Vector that) {
     if (that.size() != this.size()) {
       throw new IllegalArgumentException("mismatching sizes");

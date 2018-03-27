@@ -7,10 +7,10 @@ public class ConvolutionLayer extends Layer {
   private int[] outputDimensions;
 
   private Tensor filter;
-  private Tensor bias;
+  private Vector bias;
 
   private Tensor filterGradient;
-  private Tensor biasGradient;
+  private Vector biasGradient;
 
   public ConvolutionLayer(int[] inputDimensions, int[] filterDimensions, int[] outputDimensions) {
     super(Tensor.countElements(inputDimensions), Tensor.countElements(outputDimensions));
@@ -23,7 +23,7 @@ public class ConvolutionLayer extends Layer {
 
     setActivation(new Tensor(outputDimensions));
     filter = new Tensor(filterDimensions);
-    bias = new Tensor(outputDimensions);
+    bias = new Vector(filter.getLastDimension());
 
     initialize();
     resetGradient();
@@ -55,10 +55,21 @@ public class ConvolutionLayer extends Layer {
   // TODO Remove; This method only for testing
   public void setFilter(Tensor filter) {
     if (!Tensor.sizesEqual(filter, this.filter)) {
-      throw new IllegalArgumentException("The new filter must match the existing filter dimensions");
+      throw new IllegalArgumentException(
+          "The new filter must match the existing filter dimensions.");
     }
 
     this.filter = filter;
+  }
+
+  // TODO Remove; This is only for testing
+  public void setBias(Vector bias) {
+    if (bias.size() != filter.getLastDimension()) {
+      throw new IllegalArgumentException(
+          "The bias length must be the same as the number of filters.");
+    }
+
+    this.bias = bias;
   }
 
   @Override
@@ -72,25 +83,45 @@ public class ConvolutionLayer extends Layer {
   }
 
   @Override
+  public Tensor getActivation() {
+    return Tensor.asTensor(super.getActivation(), outputDimensions);
+  }
+
+  @Override
+  public Tensor getBlame() {
+    return Tensor.asTensor(super.getBlame(), outputDimensions);
+  }
+
+  @Override
   Vector activate(Vector x) {
-    Tensor input;
-    if (x instanceof Tensor) {
-      input = (Tensor) x;
+    Tensor input = Tensor.asTensor(x, inputDimensions);
+
+    getActivation().fill(0);
+
+    if (input.getLastDimension() == 1) {
+      Tensor.convolvePerFilter(input, filter, getActivation());
     } else {
-      input = new Tensor(x, inputDimensions);
+      Tensor.convolve(input, filter, getActivation());
     }
 
-    Tensor.convolve(input, filter, (Tensor) getActivation());
-//    getActivation().add(bias);
+    addBiasByLastDimension();
+
     return getActivation();
+  }
+
+  private void addBiasByLastDimension() {
+    Tensor[] activationLayers = getActivation().splitByLastDimension();
+
+    for (int i = 0; i < activationLayers.length; i++) {
+      activationLayers[i].addScalar(bias.get(i));
+    }
   }
 
   @Override
   Vector backPropagate() {
     Tensor result = new Tensor(inputDimensions);
-    Tensor blameTensor = new Tensor(getBlame(), outputDimensions);
 
-    Tensor.convolve(blameTensor, filter, result, true);
+    Tensor.convolve(getBlame(), filter, result, true);
     return result;
   }
 
@@ -112,7 +143,7 @@ public class ConvolutionLayer extends Layer {
     }
 
     if (biasGradient == null) {
-      biasGradient = new Tensor(outputDimensions);
+      biasGradient = new Vector(filter.getLastDimension());
     }
 
     filterGradient.fill(0);
@@ -121,10 +152,9 @@ public class ConvolutionLayer extends Layer {
 
   @Override
   void updateGradient(Vector x) {
-    Tensor input = new Tensor(x, inputDimensions);
-    Tensor blameTensor = new Tensor(getBlame(), outputDimensions);
+    Tensor input = Tensor.asTensor(x, inputDimensions);
 
-    Tensor.convolve(input, blameTensor, filterGradient);
+    Tensor.convolve(input, getBlame(), filterGradient);
     biasGradient.add(getBlame());
   }
 
