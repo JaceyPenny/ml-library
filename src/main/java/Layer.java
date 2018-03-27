@@ -1,6 +1,6 @@
 abstract class Layer {
   public enum LayerType {
-    LINEAR, TANH, CONVOLUTION
+    LINEAR, TANH, LEAKY_RECTIFIER, CONVOLUTION
   }
 
   private int inputs;
@@ -18,6 +18,9 @@ abstract class Layer {
   }
 
   public abstract LayerType getLayerType();
+
+  public void initialize() {
+  }
 
   public int getInputs() {
     return inputs;

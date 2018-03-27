@@ -37,7 +37,8 @@ public class LinearLayer extends Layer {
     return bias;
   }
 
-  public void initializeWeights() {
+  @Override
+  public void initialize() {
     fillAll(() -> Math.max(0.03, 1.0 / getInputs()) * Main.RANDOM.nextGaussian());
   }
 

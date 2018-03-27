@@ -3,6 +3,11 @@ import java.util.Arrays;
 public class Tensor extends Vector {
   private int[] dimensions;
 
+  public Tensor(int[] dimensions) {
+    super(countElements(dimensions));
+    this.dimensions = dimensions;
+  }
+
   /**
    * General-purpose constructor. Example: <br>
    * Tensor t(v, new int[] {5, 7, 3});
@@ -11,12 +16,8 @@ public class Tensor extends Vector {
     super(values, 0, values.size());
     this.dimensions = new int[dimensions.length];
 
-    int total = 1;
-
-    for (int i = 0; i < dimensions.length; i++) {
-      this.dimensions[i] = dimensions[i];
-      total *= dimensions[i];
-    }
+    int total = countElements(dimensions);
+    System.arraycopy(dimensions, 0, this.dimensions, 0, dimensions.length);
 
     if (total != values.size()) {
       throw new RuntimeException(
@@ -31,6 +32,14 @@ public class Tensor extends Vector {
     super(other, 0, other.size());
     dimensions = new int[other.dimensions.length];
     System.arraycopy(other.dimensions, 0, dimensions, 0, other.dimensions.length);
+  }
+
+  static void convolve(Tensor in, Tensor filter, Tensor out) {
+    convolve(in, filter, out, false);
+  }
+
+  static void convolve(Tensor in, Tensor filter, Tensor out, boolean flipFilter) {
+    convolve(in, filter, out, flipFilter, 1);
   }
 
   /**

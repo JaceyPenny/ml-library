@@ -59,13 +59,18 @@ public class NeuralNetwork implements SupervisedLearner {
     addLayer(layerType, inputs, outputs);
   }
 
-  public void addLayer(Layer.LayerType layerType, int inputs, int outputs) {
+  private void addLayer(Layer.LayerType layerType, int inputs, int outputs) {
     switch (layerType) {
       case LINEAR:
         layers.add(new LinearLayer(inputs, outputs));
         break;
       case TANH:
         layers.add(new TanhLayer(inputs));
+        break;
+      case LEAKY_RECTIFIER:
+        layers.add(new LeakyRectifierLayer(inputs));
+      case CONVOLUTION:
+        // TODO implement
         break;
       default:
         throw new IllegalArgumentException("No implementation exists for this layer type.");
@@ -82,11 +87,7 @@ public class NeuralNetwork implements SupervisedLearner {
   }
 
   public void initializeWeights() {
-    for (Layer layer : layers) {
-      if (layer instanceof LinearLayer) {
-        ((LinearLayer) layer).initializeWeights();
-      }
-    }
+    layers.forEach(Layer::initialize);
   }
 
   public boolean isValid() {
