@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 public class Tensor extends Vector {
   private int[] dimensions;
 
@@ -146,6 +148,10 @@ public class Tensor extends Vector {
         break;
       }
     }
+  }
+
+  public static int countElements(int[] dimensions) {
+    return Arrays.stream(dimensions).reduce(1, (id, next) -> id * next);
   }
 
   /**

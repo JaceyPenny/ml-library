@@ -54,12 +54,12 @@ public class NeuralNetwork implements SupervisedLearner {
     }
   }
 
-  public void addFirstLayer(LayerType layerType, int inputs, int outputs) {
+  public void addFirstLayer(Layer.LayerType layerType, int inputs, int outputs) {
     this.layers.clear();
     addLayer(layerType, inputs, outputs);
   }
 
-  public void addLayer(LayerType layerType, int inputs, int outputs) {
+  public void addLayer(Layer.LayerType layerType, int inputs, int outputs) {
     switch (layerType) {
       case LINEAR:
         layers.add(new LinearLayer(inputs, outputs));
@@ -72,7 +72,7 @@ public class NeuralNetwork implements SupervisedLearner {
     }
   }
 
-  public void addLayer(LayerType layerType, int outputs) {
+  public void addLayer(Layer.LayerType layerType, int outputs) {
     if (layers.isEmpty()) {
       throw new IllegalStateException("You must first add a layer with a specified number of inputs");
     }
@@ -94,7 +94,7 @@ public class NeuralNetwork implements SupervisedLearner {
   }
 
   public boolean isLinearNetwork() {
-    return layers.size() == 1 && layers.get(0).getLayerType() == LayerType.LINEAR;
+    return layers.size() == 1 && layers.get(0).getLayerType() == Layer.LayerType.LINEAR;
   }
 
   @Override

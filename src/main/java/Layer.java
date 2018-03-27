@@ -1,4 +1,8 @@
 abstract class Layer {
+  public enum LayerType {
+    LINEAR, TANH, CONVOLUTION
+  }
+
   private int inputs;
   private int outputs;
 
