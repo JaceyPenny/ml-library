@@ -2,7 +2,6 @@ import java.util.Arrays;
 import java.util.function.Supplier;
 
 public class ConvolutionLayer extends Layer {
-
   private int[] inputDimensions;
   private int[] filterDimensions;
   private int[] outputDimensions;
