@@ -2,10 +2,12 @@ import java.util.Arrays;
 
 public class Tensor extends Vector {
   private int[] dimensions;
+  private int[] dimensionSteps;
 
   public Tensor(int[] dimensions) {
     super(countElements(dimensions));
     this.dimensions = dimensions;
+    initializeDimensionSteps();
   }
 
   /**
@@ -23,6 +25,7 @@ public class Tensor extends Vector {
       throw new RuntimeException(
           String.format("Mismatching sizes. Vector has %d, Tensor has %d", values.size(), total));
     }
+    initializeDimensionSteps();
   }
 
   /**
@@ -32,6 +35,16 @@ public class Tensor extends Vector {
     super(other, 0, other.size());
     dimensions = new int[other.dimensions.length];
     System.arraycopy(other.dimensions, 0, dimensions, 0, other.dimensions.length);
+    initializeDimensionSteps();
+  }
+
+  private void initializeDimensionSteps() {
+    dimensionSteps = new int[dimensions.length];
+    dimensionSteps[0] = 1;
+
+    for (int i = 1; i < dimensions.length; i++) {
+      dimensionSteps[i] = dimensionSteps[i - 1] * dimensions[i - 1];
+    }
   }
 
   private int calculateIndex(int... position) {
@@ -39,14 +52,11 @@ public class Tensor extends Vector {
       throw new IllegalArgumentException("Invalid number of dimensions for position");
     }
 
-    int index = position[0];
-    int dimensionMultiplier = 1;
+    int index = 0;
 
-    for (int i = 1; i < dimensions.length; i++) {
+    for (int i = 0; i < dimensions.length; i++) {
       int coordinate = position[i];
-      dimensionMultiplier *= dimensions[i];
-
-      index += coordinate * dimensionMultiplier;
+      index += coordinate * dimensionSteps[i];
     }
 
     return index;
@@ -147,9 +157,13 @@ public class Tensor extends Vector {
           innerK[i]++;
           ip += innerStep[i];
           fp += filterStep[i];
+
           int padding = (stride * (out.dimensions[i] - 1) + filter.dimensions[i] - in.dimensions[i]) / 2;
-          if (innerK[i] < filter.dimensions[i] && outerK[i] + innerK[i] - padding < in.dimensions[i])
+
+          if (innerK[i] < filter.dimensions[i] && outerK[i] + innerK[i] - padding < in.dimensions[i]) {
             break;
+          }
+
           int adj = (padding - Math.min(padding, outerK[i])) - innerK[i];
           innerK[i] += adj;
           fp += adj * filterStep[i];
@@ -189,6 +203,20 @@ public class Tensor extends Vector {
 
   public static int countElements(int[] dimensions) {
     return Arrays.stream(dimensions).reduce(1, (id, next) -> id * next);
+  }
+
+  public static boolean sizesEqual(Tensor first, Tensor second) {
+    if (first.dimensions.length != second.dimensions.length) {
+      return false;
+    }
+
+    for (int i = 0; i < first.dimensions.length; i++) {
+      if (first.dimensions[i] != second.dimensions[i]) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   /**

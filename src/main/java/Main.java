@@ -196,7 +196,11 @@ class Main {
     return new PrintWriter(new FileOutputStream(outputFile));
   }
 
+  private static void runAssignment4() {
+
+  }
+
   public static void main(String[] args) {
-    runAssignment3();
+    runAssignment4();
   }
 }

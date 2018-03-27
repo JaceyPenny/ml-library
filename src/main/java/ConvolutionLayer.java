@@ -52,6 +52,15 @@ public class ConvolutionLayer extends Layer {
     this.outputDimensions = outputDimensions;
   }
 
+  // TODO Remove; This method only for testing
+  public void setFilter(Tensor filter) {
+    if (!Tensor.sizesEqual(filter, this.filter)) {
+      throw new IllegalArgumentException("The new filter must match the existing filter dimensions");
+    }
+
+    this.filter = filter;
+  }
+
   @Override
   public ConvolutionLayer copy() {
     return new ConvolutionLayer(inputDimensions, filterDimensions, outputDimensions);
@@ -64,10 +73,15 @@ public class ConvolutionLayer extends Layer {
 
   @Override
   Vector activate(Vector x) {
-    Tensor input = new Tensor(x, inputDimensions);
+    Tensor input;
+    if (x instanceof Tensor) {
+      input = (Tensor) x;
+    } else {
+      input = new Tensor(x, inputDimensions);
+    }
 
     Tensor.convolve(input, filter, (Tensor) getActivation());
-    getActivation().add(bias);
+//    getActivation().add(bias);
     return getActivation();
   }
 
