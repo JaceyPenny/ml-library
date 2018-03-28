@@ -92,6 +92,25 @@ public class Tensor extends Vector {
       result = new Tensor(value, dimensions);
     }
 
+    if (result.dimensions.length < dimensions.length) {
+      // check all the dimensions after the length of result.dimensions to see if they're just 1
+      for (int i = result.dimensions.length; i < dimensions.length; i++) {
+        if (dimensions[i] != 1) {
+          throw new IllegalStateException("The input Tensor has different dimensions than desired.");
+        }
+      }
+
+      result = new Tensor(result, dimensions);
+    } else if (result.dimensions.length > dimensions.length) {
+      for (int i = dimensions.length; i < result.dimensions.length; i++) {
+        if (result.dimensions[i] != 1) {
+          throw new IllegalStateException("The input Tensor has different dimensions than desired.");
+        }
+      }
+
+      result = new Tensor(result, dimensions);
+    }
+
     if (!sizesEqual(result.dimensions, dimensions)) {
       throw new IllegalArgumentException(
           "The desired dimensions are different than the existing Tensor's dimensions.");
@@ -138,7 +157,8 @@ public class Tensor extends Vector {
     convolvePerFilter(in, filter, out, flipFilter, 1);
   }
 
-  static void convolvePerFilter(Tensor in, Tensor filter, Tensor out, boolean flipFilter, int stride) {
+  static void convolvePerFilter(
+      Tensor in, Tensor filter, Tensor out, boolean flipFilter, int stride) {
     checkDimensions(in, filter, out);
 
     if (in.dimensions[in.dimensions.length - 1] != 1) {

@@ -3,8 +3,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static org.junit.Assert.assertEquals;
-
 @RunWith(JUnit4.class)
 public class ConvolutionLayerTest extends BaseTest {
 
@@ -52,20 +50,38 @@ public class ConvolutionLayerTest extends BaseTest {
         0.701, 1.013, 1.094, 0.763,
     });
     Tensor expectedActivation = new Tensor(expectedActivationVector, new int[]{4, 4, 2});
-    assertVectorEquals(expectedActivation, testLayer.getActivation(), 1e-6);
-  }
+    assertVectorEquals(expectedActivation, testLayer.getActivation(), 1e-4);
 
-  private void assertVectorEquals(Vector expected, Vector actual, double tolerance)
-      throws AssertionError {
-    if (expected.size() != actual.size()) {
-      throw new ComparisonFailure(
-          "Sizes mismatch.", Integer.toString(expected.size()), Integer.toString(actual.size()));
-    }
+    Vector blameVector = new Vector(new double[]{
+        0, 0, 0, 0,
+        0, 0.397, 0.252, 0,
+        0, 0.017, -0.128, 0,
+        0, 0, 0, 0,
 
-    for (int i = 0; i < expected.size(); i++) {
-      if (Math.abs(expected.get(i) - actual.get(i)) > tolerance) {
-        throw new ComparisonFailure("Values do not match", expected.toString(), actual.toString());
-      }
-    }
+        0, 0, 0, 0,
+        0, -0.553, -0.788, 0,
+        0, -1.293, -1.528, 0,
+        0, 0, 0, 0
+    });
+    Tensor blame = new Tensor(blameVector, new int[]{4, 4, 2});
+
+    testLayer.setBlame(blame);
+    testLayer.updateGradient(input);
+
+    Vector expectedGradientVector = new Vector(new double[]{
+        -0.032, 0.0218, 0.0756,
+        0.1832, 0.237, 0.2908,
+        0.3984, 0.4522, 0.506,
+
+        -1.36, -1.7762, -2.1924,
+        -3.0248, -3.441, -3.8572,
+        -4.6896, -5.1058, -5.522
+    });
+    Tensor expectedGradient = new Tensor(expectedGradientVector, new int[]{3, 3, 2});
+
+    Vector expectedBiasGradient = new Vector(new double[]{0.538, -4.162});
+
+    assertVectorEquals(expectedGradient, testLayer.getGradient(), 1e-4);
+    assertVectorEquals(expectedBiasGradient, testLayer.getBiasGradient(), 1e-4);
   }
 }

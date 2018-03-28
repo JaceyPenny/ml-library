@@ -57,6 +57,7 @@ public class MaxPooling2DLayer extends Layer {
           "The first two dimensions of your input must be multiples of two.");
     }
 
+    this.inputDimensions = inputDimensions;
     outputDimensions = new int[inputDimensions.length];
     System.arraycopy(inputDimensions, 0, outputDimensions, 0, inputDimensions.length);
 

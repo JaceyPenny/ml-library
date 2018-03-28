@@ -1,3 +1,5 @@
+import org.junit.ComparisonFailure;
+
 import java.util.Random;
 
 abstract class BaseTest {
@@ -55,6 +57,20 @@ abstract class BaseTest {
   void addRandomNoiseToMatrix(Matrix target, double standardDeviations) {
     for (int r = 0; r < target.rows(); r++) {
       addRandomNoiseToVector(target.row(r), standardDeviations);
+    }
+  }
+
+  void assertVectorEquals(Vector expected, Vector actual, double tolerance)
+      throws AssertionError {
+    if (expected.size() != actual.size()) {
+      throw new ComparisonFailure(
+          "Sizes mismatch.", Integer.toString(expected.size()), Integer.toString(actual.size()));
+    }
+
+    for (int i = 0; i < expected.size(); i++) {
+      if (Math.abs(expected.get(i) - actual.get(i)) > tolerance) {
+        throw new ComparisonFailure("Values do not match", expected.toString(), actual.toString());
+      }
     }
   }
 }

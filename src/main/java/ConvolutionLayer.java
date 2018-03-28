@@ -72,6 +72,16 @@ public class ConvolutionLayer extends Layer {
     this.bias = bias;
   }
 
+  // TODO Remove; This is only for testing
+  public Tensor getGradient() {
+    return filterGradient;
+  }
+
+  // TODO Remove; This is only for testing
+  public Vector getBiasGradient() {
+    return biasGradient;
+  }
+
   @Override
   public ConvolutionLayer copy() {
     return new ConvolutionLayer(inputDimensions, filterDimensions, outputDimensions);
@@ -104,12 +114,12 @@ public class ConvolutionLayer extends Layer {
       Tensor.convolve(input, filter, getActivation());
     }
 
-    addBiasByLastDimension();
+    addBiasesByLastDimension();
 
     return getActivation();
   }
 
-  private void addBiasByLastDimension() {
+  private void addBiasesByLastDimension() {
     Tensor[] activationLayers = getActivation().splitByLastDimension();
 
     for (int i = 0; i < activationLayers.length; i++) {
@@ -120,15 +130,14 @@ public class ConvolutionLayer extends Layer {
   @Override
   Vector backPropagate() {
     Tensor result = new Tensor(inputDimensions);
-
-    Tensor.convolve(getBlame(), filter, result, true);
+    Tensor.convolve(filter, getBlame(), result, true);
     return result;
   }
 
   @Override
   public void initialize() {
-    fillAll(() ->
-        Math.max(0.03, 1.0 / Tensor.countElements(inputDimensions)) * Main.RANDOM.nextGaussian());
+    final int filterElements = Tensor.countElements(filterDimensions);
+    fillAll(() -> Main.RANDOM.nextGaussian() / filterElements);
   }
 
   private void fillAll(Supplier<Double> supplier) {
@@ -154,8 +163,14 @@ public class ConvolutionLayer extends Layer {
   void updateGradient(Vector x) {
     Tensor input = Tensor.asTensor(x, inputDimensions);
 
-    Tensor.convolve(input, getBlame(), filterGradient);
-    biasGradient.add(getBlame());
+    Tensor.convolvePerFilter(input, getBlame(), filterGradient);
+
+    Tensor[] blameGradients = getBlame().splitByLastDimension();
+
+    for (int i = 0; i < biasGradient.size(); i++) {
+      Tensor singleFilterGradient = blameGradients[i];
+      biasGradient.set(i, singleFilterGradient.reduce());
+    }
   }
 
   @Override

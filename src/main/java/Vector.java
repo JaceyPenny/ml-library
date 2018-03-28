@@ -40,7 +40,7 @@ public class Vector {
   }
 
   /**
-   * This is NOT a copy constructor. It wraps the same buffer of values as v.
+   * This is NOT a copy constructor. It wraps the same buffer of values as other.
    */
   public Vector(Vector other, int begin, int length) {
     values = other.values;

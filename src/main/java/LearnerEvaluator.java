@@ -61,6 +61,10 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
     int misclassifications = 0;
 
     for (int row = 0; row < features.rows(); row++) {
+      if (row % 100 == 0) {
+        System.out.println("Testing row " + row + "...");
+      }
+
       Vector output = learner.predict(features.row(row));
       int predictedNumber = output.maxIndex();
 
@@ -74,13 +78,16 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
   }
 
   private void outputMisclassifications(double misclassifications, boolean isTraining) {
+    MetricTracker metricTracker = (isTraining) ? trainingMetricTracker : testingMetricTracker;
+
     if (trainingPrintWriter != null && testingPrintWriter != null && trainingMetricTracker != null) {
       PrintWriter writer = (isTraining) ? trainingPrintWriter : testingPrintWriter;
-      MetricTracker metricTracker = (isTraining) ? trainingMetricTracker : testingMetricTracker;
 
       writer.printf("%d,%.3f,%.5f\n",
           metricTracker.getSteps(), metricTracker.getTime() / 1000.0, misclassifications);
       metricTracker.updateSteps(batchSize);
+    } else {
+//      System.out.printf("%d, %.3f, %.5f\n", metricTracker.getSteps(), metricTracker.getTime() / 1000.0, misclassifications);
     }
   }
 
