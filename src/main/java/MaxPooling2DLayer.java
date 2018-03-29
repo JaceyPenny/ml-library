@@ -108,9 +108,30 @@ public class MaxPooling2DLayer extends Layer {
   }
 
   @Override
+  public Tensor getBlame() {
+    return Tensor.asTensor(super.getBlame(), outputDimensions);
+  }
+
+  @Override
   Vector backPropagate() {
+    /*
+      +---+---+        (x,y,z), 3  => (x*2 + 1, y*2 + 1, z)
+      |[0]|[1]|         +---+
+      +---+---+ =====>  | a |
+      |[2]|[3]|         +---+
+      +---+---+
+
+      =
+
+      +---+---+
+      | 0 | 0 |
+      +---+---+
+      | 0 | a |
+      +---+---+
+    */
+
     Tensor result = new Tensor(inputDimensions);
-    Tensor blame = new Tensor(getBlame(), outputDimensions);
+    Tensor blame = getBlame();
 
     for (int k = 0; k < outputDimensions[2]; k++) {
       for (int j = 0; j < outputDimensions[1]; j++) {
@@ -121,16 +142,16 @@ public class MaxPooling2DLayer extends Layer {
 
           switch (maxIndex) {
             case 0:
-              result.set(value, i*2, j*2, k);
+              result.set(value, i * 2, j * 2, k);
               break;
             case 1:
-              result.set(value, i*2 + 1, j*2, k);
+              result.set(value, i * 2 + 1, j * 2, k);
               break;
             case 2:
-              result.set(value, i*2, j*2 + 1, k);
+              result.set(value, i * 2, j * 2 + 1, k);
               break;
             case 3:
-              result.set(value, i*2 + 1, j*2 + 1, k);
+              result.set(value, i * 2 + 1, j * 2 + 1, k);
               break;
             default:
               break;

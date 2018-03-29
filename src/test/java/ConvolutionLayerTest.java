@@ -1,4 +1,3 @@
-import org.junit.ComparisonFailure;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -83,5 +82,21 @@ public class ConvolutionLayerTest extends BaseTest {
 
     assertVectorEquals(expectedGradient, testLayer.getGradient(), 1e-4);
     assertVectorEquals(expectedBiasGradient, testLayer.getBiasGradient(), 1e-4);
+
+    Vector expectedWeightsVector = new Vector(new double[]{
+        0.00968, 0.020218, 0.030756,
+        0.041832, 0.05237, 0.062908,
+        0.073984, 0.084522, 0.09506,
+
+        0.0964, 0.102238, 0.108076,
+        0.109752, 0.11559, 0.121428,
+        0.123104, 0.128942, 0.13478
+    });
+    Tensor expectedWeights = new Tensor(expectedWeightsVector, new int[]{3, 3, 2});
+
+    testLayer.applyGradient(0.01, 0);
+    Tensor actualWeights = testLayer.getFilter();
+
+    assertVectorEquals(expectedWeights, actualWeights, 1e-5);
   }
 }

@@ -48,7 +48,7 @@ public class NeuralNetwork implements SupervisedLearner {
     this.layers.add(layer);
   }
 
-  public void initializeWeights() {
+  public void initialize() {
     layers.forEach(Layer::initialize);
   }
 

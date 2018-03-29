@@ -25,7 +25,6 @@ public class ConvolutionLayer extends Layer {
     filter = new Tensor(filterDimensions);
     bias = new Vector(filter.getLastDimension());
 
-    initialize();
     resetGradient();
   }
 
@@ -82,6 +81,11 @@ public class ConvolutionLayer extends Layer {
     return biasGradient;
   }
 
+  // TODO Remove; This is only for testing
+  public Tensor getFilter() {
+    return filter;
+  }
+
   @Override
   public ConvolutionLayer copy() {
     return new ConvolutionLayer(inputDimensions, filterDimensions, outputDimensions);
@@ -130,6 +134,7 @@ public class ConvolutionLayer extends Layer {
   @Override
   Vector backPropagate() {
     Tensor result = new Tensor(inputDimensions);
+    result.fill(0);
     Tensor.convolve(filter, getBlame(), result, true);
     return result;
   }
@@ -168,8 +173,8 @@ public class ConvolutionLayer extends Layer {
     Tensor[] blameGradients = getBlame().splitByLastDimension();
 
     for (int i = 0; i < biasGradient.size(); i++) {
-      Tensor singleFilterGradient = blameGradients[i];
-      biasGradient.set(i, singleFilterGradient.reduce());
+      Tensor singleBlameGradient = blameGradients[i];
+      biasGradient.set(i, singleBlameGradient.reduce());
     }
   }
 

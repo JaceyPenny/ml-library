@@ -61,10 +61,6 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
     int misclassifications = 0;
 
     for (int row = 0; row < features.rows(); row++) {
-      if (row % 100 == 0) {
-        System.out.println("Testing row " + row + "...");
-      }
-
       Vector output = learner.predict(features.row(row));
       int predictedNumber = output.maxIndex();
 
@@ -222,11 +218,23 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
   }
 
   private void trainMiniBatch(Matrix features, Matrix labels, int batchSize) {
+    Matrix.shuffleMatrices(features, labels);
     int batches = features.rows() / batchSize;
 
+    double progress = 0;
+
+    System.out.print("Progress: ");
+
     for (int i = 0; i < batches; i++) {
+      if (i / (double) batches - progress > 0.05) {
+        progress += 0.05;
+        System.out.printf("%.0f%%...", progress * 100);
+      }
+
       trainSingleMiniBatch(features, labels, batchSize, i);
     }
+
+    System.out.println("100%");
   }
 
   public void trainSingleRow(Matrix features, Matrix labels, int row) {
