@@ -192,11 +192,11 @@ class Main {
     Matrix trainingFeatures_temp = Matrix.fromARFF("data/train_feat.arff");
     Matrix trainingLabels_temp = Matrix.fromARFF("data/train_lab.arff").toOneHot();
 
-    Matrix testingFeatures = Matrix.fromARFF("data/test_feat.arff").copyBlock(0, 0, 1000, 784);
-    Matrix testingLabels = Matrix.fromARFF("data/test_lab.arff").toOneHot().copyBlock(0, 0, 1000, 10);
+    Matrix testingFeatures = Matrix.fromARFF("data/test_feat.arff").copyBlock(0, 0, 500, 784);
+    Matrix testingLabels = Matrix.fromARFF("data/test_lab.arff").toOneHot().copyBlock(0, 0, 500, 10);
 
-    Matrix trainingFeatures = trainingFeatures_temp.copyBlock(0, 0, 5000, 784);
-    Matrix trainingLabels = trainingLabels_temp.copyBlock(0, 0, 5000, 10);
+    Matrix trainingFeatures = trainingFeatures_temp.copyBlock(0, 0, 2000, 784);
+    Matrix trainingLabels = trainingLabels_temp.copyBlock(0, 0, 2000, 10);
 
     trainingFeatures.scale(1.0 / 256.0);
     testingFeatures.scale(1.0 / 256.0);
@@ -207,13 +207,13 @@ class Main {
     NeuralNetwork neuralNetwork = new NeuralNetwork();
     neuralNetwork.setLearningRate(0.01);
 
-    neuralNetwork.addLayer(new ConvolutionLayer(new int[]{28, 28}, new int[]{5, 5, 8}, new int[]{28, 28, 8}));
-    neuralNetwork.addLayer(new LeakyRectifierLayer(28 * 28 * 8));
-    neuralNetwork.addLayer(new MaxPooling2DLayer(new int[]{28, 28, 8}));
-    neuralNetwork.addLayer(new ConvolutionLayer(new int[]{14, 14, 8}, new int[]{5, 5, 8, 8}, new int[]{14, 14, 1, 8}));
+    neuralNetwork.addLayer(new ConvolutionLayer(new int[]{28, 28}, new int[]{5, 5, 32}, new int[]{28, 28, 32}));
+    neuralNetwork.addLayer(new LeakyRectifierLayer(28 * 28 * 32));
+    neuralNetwork.addLayer(new MaxPooling2DLayer(new int[]{28, 28, 32}));
+    neuralNetwork.addLayer(new ConvolutionLayer(new int[]{14, 14, 32}, new int[]{5, 5, 32, 8}, new int[]{14, 14, 1, 8}));
     neuralNetwork.addLayer(new LeakyRectifierLayer(14 * 14 * 8));
     neuralNetwork.addLayer(new MaxPooling2DLayer(new int[]{14, 14, 8}));
-    neuralNetwork.addLayer(new LinearLayer(28*28*8, 100));
+    neuralNetwork.addLayer(new LinearLayer(7 * 7 * 8, 100));
     neuralNetwork.addLayer(new LeakyRectifierLayer(100));
     neuralNetwork.addLayer(new LinearLayer(100, 10));
     neuralNetwork.addLayer(new LeakyRectifierLayer(10));
@@ -223,17 +223,15 @@ class Main {
     LearnerEvaluator<NeuralNetwork> evaluator = new LearnerEvaluator<>(neuralNetwork, LearnerEvaluator.TrainingType.MINI_BATCH);
     evaluator.setBatchSize(10);
 
-    System.out.println("Testing " + testingFeatures.rows() + " rows");
-
     int misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
-    System.out.println("Misclassifications: " + misclassifications + " / " + testingLabels.rows());
+    System.out.println("\rInitial misclassifications: " + misclassifications + " / " + testingLabels.rows());
 
     for (int i = 0; i < 100; i++) {
-      System.out.println("Beginning epoch " + i + "...");
+      System.out.println("Epoch " + (i + 1) + " ===============");
 
       evaluator.train(trainingFeatures, trainingLabels);
       misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
-      System.out.println("Misclassifications: " + misclassifications + " / " + testingLabels.rows());
+      System.out.println("\rmisclassifications: " + misclassifications + " / " + testingLabels.rows());
     }
   }
 

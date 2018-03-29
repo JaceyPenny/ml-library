@@ -168,6 +168,32 @@ public class Tensor extends Vector {
     }
   }
 
+  public static void convolvePerLayer(Tensor input, Tensor filter, Tensor result) {
+    convolvePerLayer(input, filter, result, false);
+  }
+
+  public static void convolvePerLayer(Tensor input, Tensor filter, Tensor result, boolean flipFilter) {
+    convolvePerLayer(input, filter, result, flipFilter, 1);
+  }
+
+  public static void convolvePerLayer(Tensor input, Tensor filter, Tensor result, boolean flipFilter, int stride) {
+    if (input.getLastDimension() != filter.getLastDimension()) {
+      throw new IllegalArgumentException("Expected the input and filter to have the same last dimension.");
+    }
+
+    if (result.getLastDimension() != 1) {
+      throw new IllegalArgumentException("Expected the result Tensor to have a final dimension of 1.");
+    }
+
+    Tensor[] inputSplit = input.splitByLastDimension();
+    Tensor[] filterSplit = filter.splitByLastDimension();
+    Tensor resultLowered = result.splitByLastDimension()[0];
+
+    for (int i = 0; i < inputSplit.length; i++) {
+      convolve(inputSplit[i], filterSplit[i], resultLowered, flipFilter, stride);
+    }
+  }
+
   static void convolve(Tensor in, Tensor filter, Tensor out) {
     convolve(in, filter, out, false);
   }
@@ -311,6 +337,23 @@ public class Tensor extends Vector {
     }
 
     return true;
+  }
+
+  @Override
+  public String toString() {
+    if (dimensions.length == 1) {
+      return super.toString();
+    }
+
+    StringBuilder stringBuilder = new StringBuilder();
+    Tensor[] split = splitByLastDimension();
+    for (Tensor tensor : split) {
+      stringBuilder.append(tensor.toString());
+      stringBuilder.append('\n');
+    }
+
+//    stringBuilder.append('\n');
+    return stringBuilder.toString();
   }
 
   /**

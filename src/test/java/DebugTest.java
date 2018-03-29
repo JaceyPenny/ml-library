@@ -57,7 +57,7 @@ public class DebugTest extends BaseTest {
     });
     Tensor filter = new Tensor(filterVector, new int[]{3, 3, 1});
 
-    layer.setFilter(filter);
+    layer.setWeights(filter);
 
     Vector bias = new Vector(new double[]{0});
     layer.setBias(bias);
@@ -82,7 +82,7 @@ public class DebugTest extends BaseTest {
     });
 
     Tensor filter = new Tensor(filterVector, new int[]{3, 3, 2});
-    testLayer.setFilter(filter);
+    testLayer.setWeights(filter);
 
     testLayer.setBias(new Vector(new double[]{0.1, 0.2}));
 

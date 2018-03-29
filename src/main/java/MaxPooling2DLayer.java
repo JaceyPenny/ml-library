@@ -1,12 +1,12 @@
 import java.util.HashMap;
 import java.util.Map;
 
-public class MaxPooling2DLayer extends Layer {
+public class MaxPooling2DLayer extends ActivationLayer {
 
   private class Tuple3 {
     private int x, y, z;
 
-    public Tuple3(int x, int y, int z) {
+    private Tuple3(int x, int y, int z) {
       this.x = x;
       this.y = y;
       this.z = z;
@@ -114,22 +114,6 @@ public class MaxPooling2DLayer extends Layer {
 
   @Override
   Vector backPropagate() {
-    /*
-      +---+---+        (x,y,z), 3  => (x*2 + 1, y*2 + 1, z)
-      |[0]|[1]|         +---+
-      +---+---+ =====>  | a |
-      |[2]|[3]|         +---+
-      +---+---+
-
-      =
-
-      +---+---+
-      | 0 | 0 |
-      +---+---+
-      | 0 | a |
-      +---+---+
-    */
-
     Tensor result = new Tensor(inputDimensions);
     Tensor blame = getBlame();
 
@@ -161,25 +145,5 @@ public class MaxPooling2DLayer extends Layer {
     }
 
     return result;
-  }
-
-  @Override
-  void resetGradient() {
-
-  }
-
-  @Override
-  void updateGradient(Vector x) {
-
-  }
-
-  @Override
-  void applyGradient(double learningRate) {
-
-  }
-
-  @Override
-  void applyGradient(double learningRate, double momentum) {
-
   }
 }

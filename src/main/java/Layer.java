@@ -19,10 +19,9 @@ abstract class Layer {
 
   public abstract LayerType getLayerType();
 
-  public void initialize() {
-  }
-
   public abstract Layer copy();
+
+  public abstract void initialize();
 
   public int getInputs() {
     return inputs;

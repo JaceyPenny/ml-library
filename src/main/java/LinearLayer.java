@@ -1,19 +1,9 @@
 import java.util.function.Supplier;
 
-public class LinearLayer extends Layer {
-  private Matrix weights;
-  private Vector bias;
-
-  private Matrix weightsGradient;
-  private Vector biasGradient;
+public class LinearLayer extends ConnectedLayer<Matrix, Vector> {
 
   public LinearLayer(int inputs, int outputs) {
     super(inputs, outputs);
-
-    weights = new Matrix(outputs, inputs);
-    bias = new Vector(outputs);
-
-    resetGradient();
   }
 
   @Override
@@ -21,24 +11,13 @@ public class LinearLayer extends Layer {
     return LayerType.LINEAR;
   }
 
-  public void setWeights(Matrix weights) {
-    this.weights = weights;
-  }
-
-  public Matrix getWeights() {
-    return weights;
-  }
-
-  public void setBias(Vector bias) {
-    this.bias = bias;
-  }
-
-  public Vector getBias() {
-    return bias;
-  }
-
   @Override
   public void initialize() {
+    super.initialize();
+
+    setWeights(new Matrix(getOutputs(), getInputs()));
+    setBias(new Vector(getOutputs()));
+
     fillAll(() -> Math.max(0.03, 1.0 / getInputs()) * Main.RANDOM.nextGaussian());
   }
 
@@ -47,33 +26,27 @@ public class LinearLayer extends Layer {
     return new LinearLayer(getInputs(), getOutputs());
   }
 
-  private void fillAll(Supplier<Double> supplier) {
-    weights.fill(supplier);
-    bias.fill(supplier);
-  }
-
   @Override
   protected void resetGradient() {
-    if (weightsGradient == null) {
-      weightsGradient = new Matrix(getOutputs(), getInputs());
+    if (getWeightsGradient() == null) {
+      setWeightsGradient(new Matrix(getOutputs(), getInputs()));
     }
 
-    if (biasGradient == null) {
-      biasGradient = new Vector(getOutputs());
+    if (getBiasGradient() == null) {
+      setBiasGradient(new Vector(getOutputs()));
     }
 
-    weightsGradient.fill(0);
-    biasGradient.fill(0);
+    super.resetGradient();
   }
 
   @Override
   Vector activate(Vector x) {
     Matrix xMatrix = x.asMatrix(Matrix.VectorType.COLUMN);
-    Matrix Mx = Matrix.multiply(weights, xMatrix);
+    Matrix Mx = Matrix.multiply(getWeights(), xMatrix);
 
     Vector productVector = Mx.serialize();
 
-    productVector.add(bias);
+    productVector.add(getBias());
     setActivation(productVector);
     return getActivation();
   }
@@ -129,35 +102,21 @@ public class LinearLayer extends Layer {
     // b -= mx_vector
     b.addScaled(mx_vector, -1);
 
-    weights = M;
-    bias = b;
+    setWeights(M);
+    setBias(b);
   }
 
   @Override
   protected Vector backPropagate() {
     Matrix blameMatrix = getBlame().asMatrix(Matrix.VectorType.COLUMN);
 
-    Matrix previousBlameMatrix = Matrix.multiply(weights, blameMatrix, true, false);
+    Matrix previousBlameMatrix = Matrix.multiply(getWeights(), blameMatrix, true, false);
     return previousBlameMatrix.serialize();
   }
 
   @Override
   void updateGradient(Vector x) {
-    addOuterProductToMatrix(getBlame(), x, weightsGradient);
-    biasGradient.add(getBlame());
-  }
-
-  @Override
-  void applyGradient(double learningRate) {
-    applyGradient(learningRate, 0);
-  }
-
-  @Override
-  void applyGradient(double learningRate, double momentum) {
-    weights.addScaled(weightsGradient, learningRate);
-    bias.addScaled(biasGradient, learningRate);
-
-    weightsGradient.scale(momentum);
-    biasGradient.scale(momentum);
+    addOuterProductToMatrix(getBlame(), x, getWeightsGradient());
+    getBiasGradient().add(getBlame());
   }
 }

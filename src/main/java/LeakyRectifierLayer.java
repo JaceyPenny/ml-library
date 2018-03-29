@@ -1,4 +1,4 @@
-public class LeakyRectifierLayer extends Layer {
+public class LeakyRectifierLayer extends ActivationLayer {
 
   public LeakyRectifierLayer(int inputs) {
     super(inputs, inputs);
@@ -36,25 +36,5 @@ public class LeakyRectifierLayer extends Layer {
     }
 
     return result;
-  }
-
-  @Override
-  void resetGradient() {
-
-  }
-
-  @Override
-  void updateGradient(Vector x) {
-
-  }
-
-  @Override
-  void applyGradient(double learningRate) {
-
-  }
-
-  @Override
-  void applyGradient(double learningRate, double momentum) {
-
   }
 }

@@ -12,7 +12,7 @@ import java.util.stream.Stream;
  * the matrix also stores some meta-data which describes the columns (or attributes)
  * in the matrix.
  */
-public class Matrix {
+public class Matrix implements Spatial<Matrix> {
   public enum VectorType {
     ROW, COLUMN
   }
@@ -857,7 +857,7 @@ public class Matrix {
     if (transposeA) {
       if (transposeB) {
         if (a.rows() != b.cols())
-          throw new IllegalArgumentException("No can do");
+          throw new IllegalArgumentException(String.format("No can do. Incompatible sizes: (%d, %d) x (%d, %d)", a.rows(), a.cols(), b.rows(), b.cols()));
         for (int i = 0; i < res.rows(); i++) {
           for (int j = 0; j < res.cols(); j++) {
             double d = 0.0;
@@ -868,7 +868,7 @@ public class Matrix {
         }
       } else {
         if (a.rows() != b.rows())
-          throw new IllegalArgumentException("No can do");
+          throw new IllegalArgumentException(String.format("No can do. Incompatible sizes: (%d, %d) x (%d, %d)", a.rows(), a.cols(), b.rows(), b.cols()));
         for (int i = 0; i < res.rows(); i++) {
           for (int j = 0; j < res.cols(); j++) {
             double d = 0.0;
@@ -881,7 +881,7 @@ public class Matrix {
     } else {
       if (transposeB) {
         if (a.cols() != b.cols())
-          throw new IllegalArgumentException("No can do");
+          throw new IllegalArgumentException(String.format("No can do. Incompatible sizes: (%d, %d) x (%d, %d)", a.rows(), a.cols(), b.rows(), b.cols()));
         for (int i = 0; i < res.rows(); i++) {
           for (int j = 0; j < res.cols(); j++) {
             double d = 0.0;
@@ -892,7 +892,7 @@ public class Matrix {
         }
       } else {
         if (a.cols() != b.rows())
-          throw new IllegalArgumentException("No can do");
+          throw new IllegalArgumentException(String.format("No can do. Incompatible sizes: (%d, %d) x (%d, %d)", a.rows(), a.cols(), b.rows(), b.cols()));
         for (int i = 0; i < res.rows(); i++) {
           for (int j = 0; j < res.cols(); j++) {
             double d = 0.0;

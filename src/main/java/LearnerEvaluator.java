@@ -53,6 +53,10 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
     this.testingMetricTracker.reset();
   }
 
+  public T getLearner() {
+    return learner;
+  }
+
   public int countMisclassifications(Matrix features, Matrix labels) {
     return countMisclassifications(features, labels, false);
   }
@@ -60,7 +64,13 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
   public int countMisclassifications(Matrix features, Matrix labels, boolean isTraining) {
     int misclassifications = 0;
 
+    System.out.print("Counting misclassifications: 0.0%                  ");
+
     for (int row = 0; row < features.rows(); row++) {
+      System.out.printf(
+          "\rCounting misclassifications: %.1f%%               ",
+          row / (double) features.rows() * 100);
+
       Vector output = learner.predict(features.row(row));
       int predictedNumber = output.maxIndex();
 
@@ -69,11 +79,12 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
       }
     }
 
-    outputMisclassifications((double) misclassifications / features.rows(), isTraining);
+    System.out.print("\rCounting misclassifications: 100.0%                       ");
+    writeMisclassifications((double) misclassifications / features.rows(), isTraining);
     return misclassifications;
   }
 
-  private void outputMisclassifications(double misclassifications, boolean isTraining) {
+  private void writeMisclassifications(double misclassifications, boolean isTraining) {
     MetricTracker metricTracker = (isTraining) ? trainingMetricTracker : testingMetricTracker;
 
     if (trainingPrintWriter != null && testingPrintWriter != null && trainingMetricTracker != null) {
@@ -82,8 +93,6 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
       writer.printf("%d,%.3f,%.5f\n",
           metricTracker.getSteps(), metricTracker.getTime() / 1000.0, misclassifications);
       metricTracker.updateSteps(batchSize);
-    } else {
-//      System.out.printf("%d, %.3f, %.5f\n", metricTracker.getSteps(), metricTracker.getTime() / 1000.0, misclassifications);
     }
   }
 
@@ -223,18 +232,15 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
 
     double progress = 0;
 
-    System.out.print("Progress: ");
+    System.out.print("\rTraining progress: 0.0%...             ");
 
     for (int i = 0; i < batches; i++) {
-      if (i / (double) batches - progress > 0.05) {
-        progress += 0.05;
-        System.out.printf("%.0f%%...", progress * 100);
-      }
+      System.out.printf("\rTraining progress: %.1f%%               ", i / (double) batches * 100.0);
 
       trainSingleMiniBatch(features, labels, batchSize, i);
     }
 
-    System.out.println("100%");
+    System.out.print("\rTraining progress: 100.0%                         ");
   }
 
   public void trainSingleRow(Matrix features, Matrix labels, int row) {

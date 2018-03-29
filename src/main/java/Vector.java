@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 /**
  * Represents a vector of doubles
  */
-public class Vector {
+public class Vector implements Spatial<Vector> {
   protected double[] values;
   protected int startIndex;
   private int length;
@@ -109,10 +109,10 @@ public class Vector {
     StringBuilder stringBuilder = new StringBuilder();
     stringBuilder.append('[');
     if (length > 0) {
-      stringBuilder.append(String.format("%6.3f", values[startIndex]));
+      stringBuilder.append(String.format("%6.4f", values[startIndex]));
       for (int i = 1; i < length; i++) {
-        stringBuilder.append(",");
-        stringBuilder.append(String.format("%6.3f", values[startIndex + i]));
+        stringBuilder.append(", ");
+        stringBuilder.append(String.format("%6.4f", values[startIndex + i]));
       }
     }
     stringBuilder.append(']');

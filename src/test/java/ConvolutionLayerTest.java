@@ -23,7 +23,7 @@ public class ConvolutionLayerTest extends BaseTest {
     });
 
     Tensor filter = new Tensor(filterVector, new int[]{3, 3, 2});
-    testLayer.setFilter(filter);
+    testLayer.setWeights(filter);
 
     testLayer.setBias(new Vector(new double[]{0.0, 0.1}));
 
