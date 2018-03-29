@@ -185,18 +185,24 @@ class Main {
     return new PrintWriter(new FileOutputStream(outputFile));
   }
 
-  private static void runAssignment4() {
+  private static void runMNISTwithCNN() {
     // Load the training data
     long startMillis = System.currentTimeMillis();
 
     Matrix trainingFeatures_temp = Matrix.fromARFF("data/train_feat.arff");
-    Matrix trainingLabels_temp = Matrix.fromARFF("data/train_lab.arff").toOneHot();
+    Matrix trainingLabels_temp = Matrix.fromARFF("data/train_lab.arff");
 
-    Matrix testingFeatures = Matrix.fromARFF("data/test_feat.arff").copyBlock(0, 0, 500, 784);
-    Matrix testingLabels = Matrix.fromARFF("data/test_lab.arff").toOneHot().copyBlock(0, 0, 500, 10);
+    Matrix testingFeatures_temp = Matrix.fromARFF("data/test_feat.arff");
+    Matrix testingLabels_temp = Matrix.fromARFF("data/test_lab.arff");
+
+    Matrix.shuffleMatrices(trainingFeatures_temp, trainingLabels_temp);
+    Matrix.shuffleMatrices(testingFeatures_temp, testingLabels_temp);
 
     Matrix trainingFeatures = trainingFeatures_temp.copyBlock(0, 0, 2000, 784);
-    Matrix trainingLabels = trainingLabels_temp.copyBlock(0, 0, 2000, 10);
+    Matrix trainingLabels = trainingLabels_temp.copyBlock(0, 0, 2000, 1).toOneHot();
+
+    Matrix testingFeatures = testingFeatures_temp.copyBlock(0, 0, 500, 784);
+    Matrix testingLabels = testingLabels_temp.copyBlock(0, 0, 500, 1).toOneHot();
 
     trainingFeatures.scale(1.0 / 256.0);
     testingFeatures.scale(1.0 / 256.0);
@@ -233,6 +239,49 @@ class Main {
       misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
       System.out.println("\rmisclassifications: " + misclassifications + " / " + testingLabels.rows());
     }
+  }
+
+  private static void runAssignment4() {
+    System.out.println("ASSIGNMENT 4: Running the finite differencing test for the sample neural network.\n\n");
+
+    NeuralNetwork neuralNetwork = new NeuralNetwork();
+
+    neuralNetwork.addLayer(new ConvolutionLayer(new int[]{8, 8}, new int[]{5, 5, 4}, new int[]{8, 8, 4}));
+    neuralNetwork.addLayer(new LeakyRectifierLayer(8 * 8 * 4));
+    neuralNetwork.addLayer(new MaxPooling2DLayer(new int[]{8, 8, 4}));
+    neuralNetwork.addLayer(new ConvolutionLayer(new int[]{4, 4, 4}, new int[]{3, 3, 4, 6}, new int[]{4, 4, 1, 6}));
+    neuralNetwork.addLayer(new LeakyRectifierLayer(4 * 4 * 6));
+    neuralNetwork.addLayer(new MaxPooling2DLayer(new int[]{4, 4, 6}));
+    neuralNetwork.addLayer(new LinearLayer(2 * 2 * 6, 3));
+
+    neuralNetwork.initialize();
+
+    Vector testInput = new Vector(new double[]{
+        0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8,
+        0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6,
+        1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4,
+        2.5, 2.6, 2.7, 2.8, 2.9, 3.0, 3.1, 3.2,
+        3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 4.0,
+        4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8,
+        4.9, 5.0, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6,
+        5.7, 5.8, 5.9, 6.0, 6.1, 6.2, 6.3, 6.4,
+        6.5, 6.6, 6.7, 6.8, 6.9, 7.0, 7.1, 7.2,
+    });
+
+    Vector testOutput = new Vector(new double[]{
+       1.0, 2.0, 3.0
+    });
+
+    Matrix testFeatures = new Matrix(1, 8 * 8);
+    testFeatures.row(0).set(0, testInput);
+
+    Matrix testLabels = new Matrix(1, 3);
+    testLabels.row(0).set(0, testOutput);
+
+    GradientEvaluator gradientEvaluator = new GradientEvaluator(neuralNetwork);
+    gradientEvaluator.setTestData(testFeatures, testLabels);
+
+    gradientEvaluator.checkAgainstFiniteDifferencing();
   }
 
   public static void main(String[] args) {

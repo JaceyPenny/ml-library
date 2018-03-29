@@ -90,6 +90,10 @@ public class Matrix implements Spatial<Matrix> {
     return jsonList;
   }
 
+  public Matrix copy() {
+    return new Matrix(this);
+  }
+
   public static Matrix fromARFF(String fileName) {
     Matrix matrix = new Matrix();
     matrix.loadARFF(fileName);
@@ -397,6 +401,10 @@ public class Matrix implements Spatial<Matrix> {
     }
   }
 
+  public int size() {
+    return rows() * cols();
+  }
+
   /**
    *  Returns the number of rows in the matrix
    */
@@ -424,6 +432,14 @@ public class Matrix implements Spatial<Matrix> {
     if (column < 0 || column >= cols()) {
       throw new IllegalArgumentException("Invalid column index: " + column);
     }
+  }
+
+  public void set(int index, double value) {
+    set(index / cols(), index % cols(), value);
+  }
+
+  public double get(int index) {
+    return get(index / cols(), index % cols());
   }
 
   public double get(int row, int column) {
@@ -829,6 +845,18 @@ public class Matrix implements Spatial<Matrix> {
         res.data.get(j)[i] = data.get(i)[j];
     }
     return res;
+  }
+
+  public double reduce() {
+    double result = 0;
+
+    for (int i = 0; i < rows(); i++) {
+      for (int j = 0; j < cols(); j++) {
+        result += get(i, j);
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -1320,5 +1348,17 @@ public class Matrix implements Spatial<Matrix> {
         matrix.swapRows(i - 1, r);
       }
     }
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder stringBuilder = new StringBuilder();
+
+    for (int i = 0; i < rows(); i++) {
+      stringBuilder.append(row(i).toString());
+      stringBuilder.append('\n');
+    }
+
+    return stringBuilder.toString().trim();
   }
 }

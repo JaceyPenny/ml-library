@@ -109,10 +109,10 @@ public class Vector implements Spatial<Vector> {
     StringBuilder stringBuilder = new StringBuilder();
     stringBuilder.append('[');
     if (length > 0) {
-      stringBuilder.append(String.format("%6.4f", values[startIndex]));
+      stringBuilder.append(String.format("%6.5f", values[startIndex]));
       for (int i = 1; i < length; i++) {
         stringBuilder.append(", ");
-        stringBuilder.append(String.format("%6.4f", values[startIndex + i]));
+        stringBuilder.append(String.format("%6.5f", values[startIndex + i]));
       }
     }
     stringBuilder.append(']');
