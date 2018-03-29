@@ -60,6 +60,10 @@ abstract class BaseTest {
     }
   }
 
+  void assertVectorEquals(Vector expected, Vector actual) {
+    assertVectorEquals(expected, actual, 1e-4);
+  }
+
   void assertVectorEquals(Vector expected, Vector actual, double tolerance)
       throws AssertionError {
     if (expected.size() != actual.size()) {

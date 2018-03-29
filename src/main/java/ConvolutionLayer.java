@@ -72,6 +72,11 @@ public class ConvolutionLayer extends Layer {
   }
 
   // TODO Remove; This is only for testing
+  public Vector getBias() {
+    return bias;
+  }
+
+  // TODO Remove; This is only for testing
   public Tensor getGradient() {
     return filterGradient;
   }
@@ -134,7 +139,6 @@ public class ConvolutionLayer extends Layer {
   @Override
   Vector backPropagate() {
     Tensor result = new Tensor(inputDimensions);
-    result.fill(0);
     Tensor.convolve(filter, getBlame(), result, true);
     return result;
   }

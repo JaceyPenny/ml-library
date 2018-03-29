@@ -21,15 +21,21 @@ public class LeakyRectifierLayer extends Layer {
 
   @Override
   Vector backPropagate() {
-    return getBlame().map((value) -> {
-      if (value > 0) {
-        return value;
-      } else if (value == 0) {
-        return 0.0;
-      } else {
-        return 0.01 * value;
+    Vector result = new Vector(getInputs());
+
+    for (int i = 0; i < getInputs(); i++) {
+      double newValue = getBlame().get(i);
+
+      if (getActivation().get(i) == 0) {
+        newValue = 0;
+      } else if (getActivation().get(i) < 0) {
+        newValue *= 0.01;
       }
-    });
+
+      result.set(i, newValue);
+    }
+
+    return result;
   }
 
   @Override

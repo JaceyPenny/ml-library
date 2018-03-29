@@ -195,8 +195,8 @@ class Main {
     Matrix testingFeatures = Matrix.fromARFF("data/test_feat.arff").copyBlock(0, 0, 1000, 784);
     Matrix testingLabels = Matrix.fromARFF("data/test_lab.arff").toOneHot().copyBlock(0, 0, 1000, 10);
 
-    Matrix trainingFeatures = trainingFeatures_temp.copyBlock(0, 0, 10000, 784);
-    Matrix trainingLabels = trainingLabels_temp.copyBlock(0, 0, 10000, 10);
+    Matrix trainingFeatures = trainingFeatures_temp.copyBlock(0, 0, 5000, 784);
+    Matrix trainingLabels = trainingLabels_temp.copyBlock(0, 0, 5000, 10);
 
     trainingFeatures.scale(1.0 / 256.0);
     testingFeatures.scale(1.0 / 256.0);
@@ -206,7 +206,6 @@ class Main {
 
     NeuralNetwork neuralNetwork = new NeuralNetwork();
     neuralNetwork.setLearningRate(0.01);
-    neuralNetwork.setMomentum(0.9);
 
     neuralNetwork.addLayer(new ConvolutionLayer(new int[]{28, 28}, new int[]{5, 5, 8}, new int[]{28, 28, 8}));
     neuralNetwork.addLayer(new LeakyRectifierLayer(28 * 28 * 8));
@@ -214,14 +213,15 @@ class Main {
     neuralNetwork.addLayer(new ConvolutionLayer(new int[]{14, 14, 8}, new int[]{5, 5, 8, 8}, new int[]{14, 14, 1, 8}));
     neuralNetwork.addLayer(new LeakyRectifierLayer(14 * 14 * 8));
     neuralNetwork.addLayer(new MaxPooling2DLayer(new int[]{14, 14, 8}));
-    neuralNetwork.addLayer(new LinearLayer(7 * 7 * 8, 100));
-    neuralNetwork.addLayer(new TanhLayer(100));
+    neuralNetwork.addLayer(new LinearLayer(28*28*8, 100));
+    neuralNetwork.addLayer(new LeakyRectifierLayer(100));
     neuralNetwork.addLayer(new LinearLayer(100, 10));
-    neuralNetwork.addLayer(new TanhLayer(10));
+    neuralNetwork.addLayer(new LeakyRectifierLayer(10));
 
     neuralNetwork.initialize();
 
-    LearnerEvaluator<NeuralNetwork> evaluator = new LearnerEvaluator<>(neuralNetwork, LearnerEvaluator.TrainingType.STOCHASTIC);
+    LearnerEvaluator<NeuralNetwork> evaluator = new LearnerEvaluator<>(neuralNetwork, LearnerEvaluator.TrainingType.MINI_BATCH);
+    evaluator.setBatchSize(10);
 
     System.out.println("Testing " + testingFeatures.rows() + " rows");
 
