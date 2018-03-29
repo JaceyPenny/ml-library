@@ -198,8 +198,8 @@ class Main {
     Matrix.shuffleMatrices(trainingFeatures_temp, trainingLabels_temp);
     Matrix.shuffleMatrices(testingFeatures_temp, testingLabels_temp);
 
-    Matrix trainingFeatures = trainingFeatures_temp.copyBlock(0, 0, 2000, 784);
-    Matrix trainingLabels = trainingLabels_temp.copyBlock(0, 0, 2000, 1).toOneHot();
+    Matrix trainingFeatures = trainingFeatures_temp.copyBlock(0, 0, 4500, 784);
+    Matrix trainingLabels = trainingLabels_temp.copyBlock(0, 0, 4500, 1).toOneHot();
 
     Matrix testingFeatures = testingFeatures_temp.copyBlock(0, 0, 500, 784);
     Matrix testingLabels = testingLabels_temp.copyBlock(0, 0, 500, 1).toOneHot();
@@ -208,7 +208,9 @@ class Main {
     testingFeatures.scale(1.0 / 256.0);
 
     long endMillis = System.currentTimeMillis();
-    System.out.printf("Loaded all data in %d ms\n", endMillis - startMillis);
+    System.out.printf("Loaded all data in %d ms\n\n", endMillis - startMillis);
+
+    System.out.println("Running MNIST Classification example...\n");
 
     NeuralNetwork neuralNetwork = new NeuralNetwork();
     neuralNetwork.setLearningRate(0.01);
@@ -222,7 +224,7 @@ class Main {
     neuralNetwork.addLayer(new LinearLayer(7 * 7 * 8, 100));
     neuralNetwork.addLayer(new LeakyRectifierLayer(100));
     neuralNetwork.addLayer(new LinearLayer(100, 10));
-    neuralNetwork.addLayer(new LeakyRectifierLayer(10));
+    neuralNetwork.addLayer(new TanhLayer(10));
 
     neuralNetwork.initialize();
 
@@ -230,14 +232,14 @@ class Main {
     evaluator.setBatchSize(10);
 
     int misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
-    System.out.println("\rInitial misclassifications: " + misclassifications + " / " + testingLabels.rows());
+    System.out.println("\rInitial misclassifications: " + misclassifications + " / " + testingLabels.rows() + '\n');
 
     for (int i = 0; i < 100; i++) {
       System.out.println("Epoch " + (i + 1) + " ===============");
 
       evaluator.train(trainingFeatures, trainingLabels);
       misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
-      System.out.println("\rmisclassifications: " + misclassifications + " / " + testingLabels.rows());
+      System.out.println("\rmisclassifications: " + misclassifications + " / " + testingLabels.rows() + '\n');
     }
   }
 
@@ -285,6 +287,6 @@ class Main {
   }
 
   public static void main(String[] args) {
-    runAssignment4();
+    runMNISTwithCNN();
   }
 }

@@ -80,7 +80,7 @@ public class ConvolutionLayerTest extends BaseTest {
 
     Vector expectedBiasGradient = new Vector(new double[]{0.538, -4.162});
 
-    assertVectorEquals(expectedGradient, testLayer.getGradient(), 1e-4);
+    assertVectorEquals(expectedGradient, testLayer.getWeightsGradient(), 1e-4);
     assertVectorEquals(expectedBiasGradient, testLayer.getBiasGradient(), 1e-4);
 
     Vector expectedWeightsVector = new Vector(new double[]{
@@ -95,7 +95,7 @@ public class ConvolutionLayerTest extends BaseTest {
     Tensor expectedWeights = new Tensor(expectedWeightsVector, new int[]{3, 3, 2});
 
     testLayer.applyGradient(0.01, 0);
-    Tensor actualWeights = testLayer.getFilter();
+    Tensor actualWeights = testLayer.getWeights();
 
     assertVectorEquals(expectedWeights, actualWeights, 1e-5);
   }

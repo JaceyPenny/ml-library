@@ -41,14 +41,15 @@ public class DebugTest extends BaseTest {
     neuralNetwork.updateGradient(input);
     neuralNetwork.updateWeights();
 
-    checkLayer2(layer2);
-    checkLayer1(layer1);
-    checkLayer0(layer0);
     checkFirstLayer(layer);
+    checkLayer0(layer0);
+    checkLayer1(layer1);
+    checkLayer2(layer2);
   }
 
   private ConvolutionLayer getFirstLayer() {
     ConvolutionLayer layer = new ConvolutionLayer(new int[]{4, 4}, new int[]{3, 3, 1}, new int[]{4, 4, 1});
+    layer.initialize();
 
     Vector filterVector = new Vector(new double[]{
         0.01, 0.02, 0.03,
@@ -70,6 +71,7 @@ public class DebugTest extends BaseTest {
         new int[]{4, 4},      // Input size (3rd dimension value is implicitly 1
         new int[]{3, 3, 2},   // Filter size
         new int[]{4, 4, 2});  // Output size
+    testLayer.initialize();
 
     Vector filterVector = new Vector(new double[]{
         0.11, 0.12, 0.13,
@@ -125,7 +127,7 @@ public class DebugTest extends BaseTest {
 
     assertVectorEquals(expectedActivation, layer.getActivation());
     assertVectorEquals(expectedBlame, layer.getBlame());
-    assertVectorEquals(expectedWeights, layer.getFilter());
+    assertVectorEquals(expectedWeights, layer.getWeights());
     assertVectorEquals(expectedBias, layer.getBias());
   }
 
@@ -171,7 +173,7 @@ public class DebugTest extends BaseTest {
 
     assertVectorEquals(expectedActivation0, layer.getActivation());
     assertVectorEquals(expectedBlame0, layer.getBlame());
-    assertVectorEquals(expectedWeights0, layer.getFilter());
+    assertVectorEquals(expectedWeights0, layer.getWeights());
     assertVectorEquals(expectedBias0, layer.getBias());
   }
 

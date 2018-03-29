@@ -51,8 +51,7 @@ public class GradientEvaluator extends LearnerEvaluator<NeuralNetwork> {
         Spatial empiricalBiasGradient = connectedLayer.getBiasGradient();
 
         System.out.println("============================");
-        System.out.printf("LAYER %d: %s\n", currentLayer, connectedLayer.getLayerType());
-        System.out.println("============================");
+        System.out.printf("LAYER %d: %s\n\n", currentLayer, connectedLayer.getLayerType());
         System.out.println("Weights (finite differencing):");
         System.out.println(calculatedWeightsGradient.toString().trim());
         System.out.println("\nWeights (empirical):");
@@ -67,7 +66,9 @@ public class GradientEvaluator extends LearnerEvaluator<NeuralNetwork> {
         System.out.println("\nSimilarity... " + compareVectors(calculatedBiasGradient, empiricalBiasGradient));
         System.out.println("============================\n\n");
       } else {
-        System.out.printf("LAYER %d: %s (no weights, skipping)\n\n\n", currentLayer, layer.getLayerType());
+        System.out.println("============================");
+        System.out.printf("LAYER %d: %s (no weights, skipping)\n", currentLayer, layer.getLayerType());
+        System.out.println("============================\n\n");
       }
 
       currentLayer++;

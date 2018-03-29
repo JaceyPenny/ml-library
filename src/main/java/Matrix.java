@@ -1352,6 +1352,10 @@ public class Matrix implements Spatial<Matrix> {
 
   @Override
   public String toString() {
+    if (rows() > 100 || cols() > 100) {
+      return super.toString();
+    }
+
     StringBuilder stringBuilder = new StringBuilder();
 
     for (int i = 0; i < rows(); i++) {
