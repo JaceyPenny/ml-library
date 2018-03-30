@@ -47,11 +47,6 @@ public class LinearLayerTest extends BaseTest {
   }
 
   @Test
-  public void updateGradient() {
-
-  }
-
-  @Test
   public void ordinaryLeastSquares() {
     int data_rows = 100;
     int x_features = 13;

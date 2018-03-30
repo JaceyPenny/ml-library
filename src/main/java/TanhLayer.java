@@ -1,7 +1,12 @@
-public class TanhLayer extends Layer {
+public class TanhLayer extends ActivationLayer {
 
   public TanhLayer(int inputs) {
     super(inputs, inputs);
+  }
+
+  @Override
+  public TanhLayer copy() {
+    return new TanhLayer(getInputs());
   }
 
   @Override
@@ -24,25 +29,5 @@ public class TanhLayer extends Layer {
     }
 
     return previousBlame;
-  }
-
-  @Override
-  void resetGradient() {
-
-  }
-
-  @Override
-  void updateGradient(Vector x) {
-
-  }
-
-  @Override
-  void applyGradient(double learningRate) {
-
-  }
-
-  @Override
-  void applyGradient(double learningRate, double momentum) {
-
   }
 }

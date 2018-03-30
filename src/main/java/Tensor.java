@@ -1,5 +1,14 @@
+import java.util.Arrays;
+
 public class Tensor extends Vector {
   private int[] dimensions;
+  private int[] dimensionSteps;
+
+  public Tensor(int[] dimensions) {
+    super(countElements(dimensions));
+    this.dimensions = dimensions;
+    initializeDimensionSteps();
+  }
 
   /**
    * General-purpose constructor. Example: <br>
@@ -9,17 +18,14 @@ public class Tensor extends Vector {
     super(values, 0, values.size());
     this.dimensions = new int[dimensions.length];
 
-    int total = 1;
-
-    for (int i = 0; i < dimensions.length; i++) {
-      this.dimensions[i] = dimensions[i];
-      total *= dimensions[i];
-    }
+    int total = countElements(dimensions);
+    System.arraycopy(dimensions, 0, this.dimensions, 0, dimensions.length);
 
     if (total != values.size()) {
       throw new RuntimeException(
           String.format("Mismatching sizes. Vector has %d, Tensor has %d", values.size(), total));
     }
+    initializeDimensionSteps();
   }
 
   /**
@@ -29,6 +35,171 @@ public class Tensor extends Vector {
     super(other, 0, other.size());
     dimensions = new int[other.dimensions.length];
     System.arraycopy(other.dimensions, 0, dimensions, 0, other.dimensions.length);
+    initializeDimensionSteps();
+  }
+
+  public int[] getDimensions() {
+    return this.dimensions;
+  }
+
+  public int getDimension(int dimension) {
+    return this.dimensions[dimension];
+  }
+
+  public int getLastDimension() {
+    return getDimension(dimensions.length - 1);
+  }
+
+  private void initializeDimensionSteps() {
+    dimensionSteps = new int[dimensions.length];
+    dimensionSteps[0] = 1;
+
+    for (int i = 1; i < dimensions.length; i++) {
+      dimensionSteps[i] = dimensionSteps[i - 1] * dimensions[i - 1];
+    }
+  }
+
+  private int calculateIndex(int... position) {
+    if (position.length != this.dimensions.length) {
+      throw new IllegalArgumentException("Invalid number of dimensions for position");
+    }
+
+    int index = 0;
+
+    for (int i = 0; i < dimensions.length; i++) {
+      int coordinate = position[i];
+      index += coordinate * dimensionSteps[i];
+    }
+
+    return index;
+  }
+
+  public double get(int... position) {
+    int index = calculateIndex(position);
+    return super.get(index);
+  }
+
+  public void set(double value, int... position) {
+    int index = calculateIndex(position);
+    super.set(index, value);
+  }
+
+  public static Tensor asTensor(Vector value, int[] dimensions) {
+    Tensor result;
+    if (value instanceof Tensor) {
+      result = (Tensor) value;
+    } else {
+      result = new Tensor(value, dimensions);
+    }
+
+    if (!sizesEqual(result.dimensions, dimensions)) {
+      if (countElements(result.dimensions) == countElements(dimensions)) {
+        result = new Tensor(value, dimensions);
+      } else {
+        throw new IllegalArgumentException(
+            "The desired dimensions are different than the existing Tensor's dimensions.");
+      }
+    }
+
+    return result;
+  }
+
+  public Tensor[] splitByLastDimension() {
+    int numResults = dimensions[dimensions.length - 1];
+    Tensor[] result = new Tensor[numResults];
+    int lastDimensionStep = dimensionSteps[dimensionSteps.length - 1];
+
+    int[] resultDimensions = new int[dimensions.length - 1];
+    System.arraycopy(dimensions, 0, resultDimensions, 0, resultDimensions.length);
+
+    for (int i = 0; i < numResults; i++) {
+      Vector segmentVector = new Vector(this, i * lastDimensionStep, lastDimensionStep);
+      Tensor segment = new Tensor(segmentVector, resultDimensions);
+      result[i] = segment;
+    }
+
+    return result;
+  }
+
+  private static void checkDimensions(Tensor in, Tensor filter, Tensor out)
+      throws IllegalArgumentException {
+    int numDimensions = in.dimensions.length;
+
+    if (numDimensions != filter.dimensions.length) {
+      throw new IllegalArgumentException("Expected tensors with the same number of dimensions.");
+    }
+
+    if (numDimensions != out.dimensions.length) {
+      throw new IllegalArgumentException("Expected tensors with the same number of dimensions.");
+    }
+  }
+
+  static void convolvePerFilter(Tensor in, Tensor filter, Tensor out) {
+    convolvePerFilter(in, filter, out, false);
+  }
+
+  static void convolvePerFilter(Tensor in, Tensor filter, Tensor out, boolean flipFilter) {
+    convolvePerFilter(in, filter, out, flipFilter, 1);
+  }
+
+  static void convolvePerFilter(
+      Tensor in, Tensor filter, Tensor out, boolean flipFilter, int stride) {
+    checkDimensions(in, filter, out);
+
+    if (in.dimensions[in.dimensions.length - 1] != 1) {
+      throw new IllegalArgumentException(
+          "Expected the input tensor to be 1 in the last dimension.");
+    }
+
+    int numFilters = filter.dimensions[filter.dimensions.length - 1];
+    int numOutputs = out.dimensions[out.dimensions.length - 1];
+
+    if (numFilters != numOutputs) {
+      throw new IllegalArgumentException(
+          "Expected the number of output tensors to be the same as the number of filters.");
+    }
+
+    Tensor input = in.splitByLastDimension()[0];
+    Tensor[] filters = filter.splitByLastDimension();
+    Tensor[] outputs = out.splitByLastDimension();
+
+    for (int i = 0; i < filters.length; i++) {
+      convolve(input, filters[i], outputs[i], flipFilter, stride);
+    }
+  }
+
+  public static void convolvePerLayer(Tensor input, Tensor filter, Tensor result) {
+    convolvePerLayer(input, filter, result, false);
+  }
+
+  public static void convolvePerLayer(Tensor input, Tensor filter, Tensor result, boolean flipFilter) {
+    convolvePerLayer(input, filter, result, flipFilter, 1);
+  }
+
+  public static void convolvePerLayer(Tensor input, Tensor filter, Tensor result, boolean flipFilter, int stride) {
+    if (input.getLastDimension() != filter.getLastDimension()) {
+      throw new IllegalArgumentException("Expected the input and filter to have the same last dimension.");
+    }
+
+    if (result.getLastDimension() != 1) {
+      throw new IllegalArgumentException("Expected the result Tensor to have a final dimension of 1.");
+    }
+
+    Tensor[] inputSplit = input.splitByLastDimension();
+    Tensor[] filterSplit = filter.splitByLastDimension();
+    Tensor resultLowered = result.splitByLastDimension()[0];
+
+    for (int i = 0; i < inputSplit.length; i++) {
+      convolve(inputSplit[i], filterSplit[i], resultLowered, flipFilter, stride);
+    }
+  }
+
+  static void convolve(Tensor in, Tensor filter, Tensor out) {
+    convolve(in, filter, out, false);
+  }
+
+  static void convolve(Tensor in, Tensor filter, Tensor out, boolean flipFilter) {
+    convolve(in, filter, out, flipFilter, 1);
   }
 
   /**
@@ -43,15 +214,9 @@ public class Tensor extends Vector {
    */
   static void convolve(Tensor in, Tensor filter, Tensor out, boolean flipFilter, int stride) {
     // Pre-compute some values
+    checkDimensions(in, filter, out);
+
     int numDimensions = in.dimensions.length;
-
-    if (numDimensions != filter.dimensions.length) {
-      throw new RuntimeException("Expected tensors with the same number of dimensions");
-    }
-
-    if (numDimensions != out.dimensions.length) {
-      throw new RuntimeException("Expected tensors with the same number of dimensions");
-    }
 
     int[] innerK = new int[numDimensions];
     int[] outerK = new int[numDimensions];
@@ -108,9 +273,13 @@ public class Tensor extends Vector {
           innerK[i]++;
           ip += innerStep[i];
           fp += filterStep[i];
+
           int padding = (stride * (out.dimensions[i] - 1) + filter.dimensions[i] - in.dimensions[i]) / 2;
-          if (innerK[i] < filter.dimensions[i] && outerK[i] + innerK[i] - padding < in.dimensions[i])
+
+          if (innerK[i] < filter.dimensions[i] && outerK[i] + innerK[i] - padding < in.dimensions[i]) {
             break;
+          }
+
           int adj = (padding - Math.min(padding, outerK[i])) - innerK[i];
           innerK[i] += adj;
           fp += adj * filterStep[i];
@@ -146,6 +315,45 @@ public class Tensor extends Vector {
         break;
       }
     }
+  }
+
+  public static int countElements(int[] dimensions) {
+    return Arrays.stream(dimensions).reduce(1, (id, next) -> id * next);
+  }
+
+  public static boolean sizesEqual(Tensor first, Tensor second) {
+    return sizesEqual(first.dimensions, second.dimensions);
+  }
+
+  private static boolean sizesEqual(int[] firstDimensions, int[] secondDimensions) {
+    if (firstDimensions.length != secondDimensions.length) {
+      return false;
+    }
+
+    for (int i = 0; i < firstDimensions.length; i++) {
+      if (firstDimensions[i] != secondDimensions[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  @Override
+  public String toString() {
+    if (dimensions.length == 1) {
+      return super.toString();
+    }
+
+    StringBuilder stringBuilder = new StringBuilder();
+    Tensor[] split = splitByLastDimension();
+    for (Tensor tensor : split) {
+      stringBuilder.append(tensor.toString());
+      stringBuilder.append('\n');
+    }
+
+//    stringBuilder.append('\n');
+    return stringBuilder.toString();
   }
 
   /**

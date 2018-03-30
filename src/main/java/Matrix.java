@@ -12,7 +12,7 @@ import java.util.stream.Stream;
  * the matrix also stores some meta-data which describes the columns (or attributes)
  * in the matrix.
  */
-public class Matrix {
+public class Matrix implements Spatial<Matrix> {
   public enum VectorType {
     ROW, COLUMN
   }
@@ -88,6 +88,10 @@ public class Matrix {
     }
 
     return jsonList;
+  }
+
+  public Matrix copy() {
+    return new Matrix(this);
   }
 
   public static Matrix fromARFF(String fileName) {
@@ -397,6 +401,10 @@ public class Matrix {
     }
   }
 
+  public int size() {
+    return rows() * cols();
+  }
+
   /**
    *  Returns the number of rows in the matrix
    */
@@ -424,6 +432,14 @@ public class Matrix {
     if (column < 0 || column >= cols()) {
       throw new IllegalArgumentException("Invalid column index: " + column);
     }
+  }
+
+  public void set(int index, double value) {
+    set(index / cols(), index % cols(), value);
+  }
+
+  public double get(int index) {
+    return get(index / cols(), index % cols());
   }
 
   public double get(int row, int column) {
@@ -831,6 +847,18 @@ public class Matrix {
     return res;
   }
 
+  public double reduce() {
+    double result = 0;
+
+    for (int i = 0; i < rows(); i++) {
+      for (int j = 0; j < cols(); j++) {
+        result += get(i, j);
+      }
+    }
+
+    return result;
+  }
+
   /**
    * Swaps the the two specified columns
    */
@@ -857,7 +885,7 @@ public class Matrix {
     if (transposeA) {
       if (transposeB) {
         if (a.rows() != b.cols())
-          throw new IllegalArgumentException("No can do");
+          throw new IllegalArgumentException(String.format("No can do. Incompatible sizes: (%d, %d) x (%d, %d)", a.rows(), a.cols(), b.rows(), b.cols()));
         for (int i = 0; i < res.rows(); i++) {
           for (int j = 0; j < res.cols(); j++) {
             double d = 0.0;
@@ -868,7 +896,7 @@ public class Matrix {
         }
       } else {
         if (a.rows() != b.rows())
-          throw new IllegalArgumentException("No can do");
+          throw new IllegalArgumentException(String.format("No can do. Incompatible sizes: (%d, %d) x (%d, %d)", a.rows(), a.cols(), b.rows(), b.cols()));
         for (int i = 0; i < res.rows(); i++) {
           for (int j = 0; j < res.cols(); j++) {
             double d = 0.0;
@@ -881,7 +909,7 @@ public class Matrix {
     } else {
       if (transposeB) {
         if (a.cols() != b.cols())
-          throw new IllegalArgumentException("No can do");
+          throw new IllegalArgumentException(String.format("No can do. Incompatible sizes: (%d, %d) x (%d, %d)", a.rows(), a.cols(), b.rows(), b.cols()));
         for (int i = 0; i < res.rows(); i++) {
           for (int j = 0; j < res.cols(); j++) {
             double d = 0.0;
@@ -892,7 +920,7 @@ public class Matrix {
         }
       } else {
         if (a.cols() != b.rows())
-          throw new IllegalArgumentException("No can do");
+          throw new IllegalArgumentException(String.format("No can do. Incompatible sizes: (%d, %d) x (%d, %d)", a.rows(), a.cols(), b.rows(), b.cols()));
         for (int i = 0; i < res.rows(); i++) {
           for (int j = 0; j < res.cols(); j++) {
             double d = 0.0;
@@ -1320,5 +1348,21 @@ public class Matrix {
         matrix.swapRows(i - 1, r);
       }
     }
+  }
+
+  @Override
+  public String toString() {
+    if (rows() > 100 || cols() > 100) {
+      return super.toString();
+    }
+
+    StringBuilder stringBuilder = new StringBuilder();
+
+    for (int i = 0; i < rows(); i++) {
+      stringBuilder.append(row(i).toString());
+      stringBuilder.append('\n');
+    }
+
+    return stringBuilder.toString().trim();
   }
 }

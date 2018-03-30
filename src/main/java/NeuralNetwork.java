@@ -12,19 +12,9 @@ public class NeuralNetwork implements SupervisedLearner {
   }
 
   public NeuralNetwork copy() {
-    NeuralNetwork newNeuralNetwork = new NeuralNetwork();
+    final NeuralNetwork newNeuralNetwork = new NeuralNetwork();
 
-    if (layers.size() > 0) {
-      Layer firstLayer = layers.get(0);
-      newNeuralNetwork.addFirstLayer(
-          firstLayer.getLayerType(), firstLayer.getInputs(), firstLayer.getOutputs());
-
-      for (int i = 1; i < layers.size(); i++) {
-        Layer nextLayer = layers.get(i);
-        newNeuralNetwork.addLayer(nextLayer.getLayerType(), nextLayer.getOutputs());
-      }
-    }
-
+    layers.forEach((layer) -> newNeuralNetwork.addLayer(layer.copy()));
     newNeuralNetwork.setMomentum(momentum);
     newNeuralNetwork.setLearningRate(learningRate);
 
@@ -54,39 +44,12 @@ public class NeuralNetwork implements SupervisedLearner {
     }
   }
 
-  public void addFirstLayer(LayerType layerType, int inputs, int outputs) {
-    this.layers.clear();
-    addLayer(layerType, inputs, outputs);
+  public void addLayer(Layer layer) {
+    this.layers.add(layer);
   }
 
-  public void addLayer(LayerType layerType, int inputs, int outputs) {
-    switch (layerType) {
-      case LINEAR:
-        layers.add(new LinearLayer(inputs, outputs));
-        break;
-      case TANH:
-        layers.add(new TanhLayer(inputs));
-        break;
-      default:
-        throw new IllegalArgumentException("No implementation exists for this layer type.");
-    }
-  }
-
-  public void addLayer(LayerType layerType, int outputs) {
-    if (layers.isEmpty()) {
-      throw new IllegalStateException("You must first add a layer with a specified number of inputs");
-    }
-
-    int previousOutputs = layers.get(layers.size() - 1).getOutputs();
-    addLayer(layerType, previousOutputs, outputs);
-  }
-
-  public void initializeWeights() {
-    for (Layer layer : layers) {
-      if (layer instanceof LinearLayer) {
-        ((LinearLayer) layer).initializeWeights();
-      }
-    }
+  public void initialize() {
+    layers.forEach(Layer::initialize);
   }
 
   public boolean isValid() {
@@ -94,7 +57,7 @@ public class NeuralNetwork implements SupervisedLearner {
   }
 
   public boolean isLinearNetwork() {
-    return layers.size() == 1 && layers.get(0).getLayerType() == LayerType.LINEAR;
+    return layers.size() == 1 && layers.get(0).getLayerType() == Layer.LayerType.LINEAR;
   }
 
   @Override

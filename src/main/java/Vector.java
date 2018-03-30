@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 /**
  * Represents a vector of doubles
  */
-public class Vector {
+public class Vector implements Spatial<Vector> {
   protected double[] values;
   protected int startIndex;
   private int length;
@@ -40,7 +40,7 @@ public class Vector {
   }
 
   /**
-   * This is NOT a copy constructor. It wraps the same buffer of values as v.
+   * This is NOT a copy constructor. It wraps the same buffer of values as other.
    */
   public Vector(Vector other, int begin, int length) {
     values = other.values;
@@ -109,10 +109,10 @@ public class Vector {
     StringBuilder stringBuilder = new StringBuilder();
     stringBuilder.append('[');
     if (length > 0) {
-      stringBuilder.append(String.format("%6.3e", values[startIndex]));
+      stringBuilder.append(String.format("%6.5f", values[startIndex]));
       for (int i = 1; i < length; i++) {
-        stringBuilder.append(",");
-        stringBuilder.append(String.format("%6.3e", values[startIndex + i]));
+        stringBuilder.append(", ");
+        stringBuilder.append(String.format("%6.5f", values[startIndex + i]));
       }
     }
     stringBuilder.append(']');
@@ -187,6 +187,12 @@ public class Vector {
 
     for (int i = 0; i < length; i++) {
       values[startIndex + i] += scalar * that.get(i);
+    }
+  }
+
+  public void addScalar(double scalar) {
+    for (int i = 0; i < length; i++) {
+      set(i, get(i) + scalar);
     }
   }
 

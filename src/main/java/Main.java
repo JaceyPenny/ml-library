@@ -19,7 +19,7 @@ class Main {
     Matrix labels = Matrix.fromARFF("data/housing_labels.arff");
 
     NeuralNetwork neuralNetwork = new NeuralNetwork();
-    neuralNetwork.addFirstLayer(LayerType.LINEAR, features.cols(), labels.cols());
+    neuralNetwork.addLayer(new LinearLayer(features.cols(), labels.cols()));
 
     LearnerEvaluator<NeuralNetwork> evaluator = new LearnerEvaluator<>(neuralNetwork);
     double finalError = evaluator.crossValidation(features, labels, 10, 5);
@@ -31,21 +31,21 @@ class Main {
     neuralNetwork.setLearningRate(0.03);
     neuralNetwork.setMomentum(0);
 
-    neuralNetwork.addFirstLayer(LayerType.LINEAR, 784, 80);
-    neuralNetwork.addLayer(LayerType.TANH, 80);
-    neuralNetwork.addLayer(LayerType.LINEAR, 30);
-    neuralNetwork.addLayer(LayerType.TANH, 30);
-    neuralNetwork.addLayer(LayerType.LINEAR, 10);
-    neuralNetwork.addLayer(LayerType.TANH, 10);
+    neuralNetwork.addLayer(new LinearLayer(784, 80));
+    neuralNetwork.addLayer(new TanhLayer(80));
+    neuralNetwork.addLayer(new LinearLayer(80, 30));
+    neuralNetwork.addLayer(new TanhLayer(30));
+    neuralNetwork.addLayer(new LinearLayer(30, 10));
+    neuralNetwork.addLayer(new TanhLayer(10));
 
     // Load the training data
     long startMillis = System.currentTimeMillis();
 
     Matrix trainingFeatures = Matrix.fromARFF("data/train_feat.arff");
-    Matrix trainingLabels_temp = Matrix.fromARFF("data/train_lab.arff");
+    Matrix trainingLabels = Matrix.fromARFF("data/train_lab.arff").toOneHot();
 
     Matrix testingFeatures = Matrix.fromARFF("data/test_feat.arff");
-    Matrix testingLabels_temp = Matrix.fromARFF("data/test_lab.arff");
+    Matrix testingLabels = Matrix.fromARFF("data/test_lab.arff").toOneHot();
 
     long endMillis = System.currentTimeMillis();
     System.out.printf("Loaded all data in %d ms\n", endMillis - startMillis);
@@ -53,18 +53,7 @@ class Main {
     trainingFeatures.scale(1.0 / 256.0);
     testingFeatures.scale(1.0 / 256.0);
 
-    Matrix trainingLabels = new Matrix(trainingLabels_temp.rows(), 10);
-    Matrix testingLabels = new Matrix(testingLabels_temp.rows(), 10);
-
-    for (int i = 0; i < trainingLabels.rows(); i++) {
-      trainingLabels.set(i, (int) Math.round(trainingLabels_temp.get(i, 0)), 1);
-    }
-
-    for (int i = 0; i < testingLabels.rows(); i++) {
-      testingLabels.set(i, (int) Math.round(testingLabels_temp.get(i, 0)), 1);
-    }
-
-    neuralNetwork.initializeWeights();
+    neuralNetwork.initialize();
 
     LearnerEvaluator<NeuralNetwork> evaluator =
         new LearnerEvaluator<>(neuralNetwork, LearnerEvaluator.TrainingType.BASIC);
@@ -100,18 +89,19 @@ class Main {
     Matrix testingLabels = dataSet.copyBlock(trainingRows, 29, testingRows, 1).toOneHot();
 
     NeuralNetwork stochasticNeuralNetwork = new NeuralNetwork();
-    stochasticNeuralNetwork.addFirstLayer(LayerType.LINEAR, 29, 20);
-    stochasticNeuralNetwork.addLayer(LayerType.TANH, 20);
-    stochasticNeuralNetwork.addLayer(LayerType.LINEAR, 4);
-    stochasticNeuralNetwork.addLayer(LayerType.TANH, 4);
+    stochasticNeuralNetwork.addLayer(new LinearLayer(29, 20));
+    stochasticNeuralNetwork.addLayer(new TanhLayer(20));
+    stochasticNeuralNetwork.addLayer(new LinearLayer(20, 4));
+    stochasticNeuralNetwork.addLayer(new TanhLayer(4));
+
     stochasticNeuralNetwork.setMomentum(MOMENTUM);
     stochasticNeuralNetwork.setLearningRate(LEARNING_RATE);
 
     NeuralNetwork miniBatchNeuralNetwork = stochasticNeuralNetwork.copy();
     miniBatchNeuralNetwork.setMomentum(0);
 
-    stochasticNeuralNetwork.initializeWeights();
-    miniBatchNeuralNetwork.initializeWeights();
+    stochasticNeuralNetwork.initialize();
+    miniBatchNeuralNetwork.initialize();
 
     PrintWriter stochasticMisclassificationsTraining;
     PrintWriter stochasticMisclassificationsTesting;
@@ -195,7 +185,108 @@ class Main {
     return new PrintWriter(new FileOutputStream(outputFile));
   }
 
+  private static void runMNISTwithCNN() {
+    // Load the training data
+    long startMillis = System.currentTimeMillis();
+
+    Matrix trainingFeatures_temp = Matrix.fromARFF("data/train_feat.arff");
+    Matrix trainingLabels_temp = Matrix.fromARFF("data/train_lab.arff");
+
+    Matrix testingFeatures_temp = Matrix.fromARFF("data/test_feat.arff");
+    Matrix testingLabels_temp = Matrix.fromARFF("data/test_lab.arff");
+
+    Matrix.shuffleMatrices(trainingFeatures_temp, trainingLabels_temp);
+    Matrix.shuffleMatrices(testingFeatures_temp, testingLabels_temp);
+
+    Matrix trainingFeatures = trainingFeatures_temp.copyBlock(0, 0, 4500, 784);
+    Matrix trainingLabels = trainingLabels_temp.copyBlock(0, 0, 4500, 1).toOneHot();
+
+    Matrix testingFeatures = testingFeatures_temp.copyBlock(0, 0, 500, 784);
+    Matrix testingLabels = testingLabels_temp.copyBlock(0, 0, 500, 1).toOneHot();
+
+    trainingFeatures.scale(1.0 / 256.0);
+    testingFeatures.scale(1.0 / 256.0);
+
+    long endMillis = System.currentTimeMillis();
+    System.out.printf("Loaded all data in %d ms\n\n", endMillis - startMillis);
+
+    System.out.println("Running MNIST Classification example...\n");
+
+    NeuralNetwork neuralNetwork = new NeuralNetwork();
+    neuralNetwork.setLearningRate(0.01);
+
+    neuralNetwork.addLayer(new ConvolutionLayer(new int[]{28, 28}, new int[]{5, 5, 32}, new int[]{28, 28, 32}));
+    neuralNetwork.addLayer(new LeakyRectifierLayer(28 * 28 * 32));
+    neuralNetwork.addLayer(new MaxPooling2DLayer(new int[]{28, 28, 32}));
+    neuralNetwork.addLayer(new ConvolutionLayer(new int[]{14, 14, 32}, new int[]{5, 5, 32, 8}, new int[]{14, 14, 1, 8}));
+    neuralNetwork.addLayer(new LeakyRectifierLayer(14 * 14 * 8));
+    neuralNetwork.addLayer(new MaxPooling2DLayer(new int[]{14, 14, 8}));
+    neuralNetwork.addLayer(new LinearLayer(7 * 7 * 8, 100));
+    neuralNetwork.addLayer(new LeakyRectifierLayer(100));
+    neuralNetwork.addLayer(new LinearLayer(100, 10));
+    neuralNetwork.addLayer(new TanhLayer(10));
+
+    neuralNetwork.initialize();
+
+    LearnerEvaluator<NeuralNetwork> evaluator = new LearnerEvaluator<>(neuralNetwork, LearnerEvaluator.TrainingType.MINI_BATCH);
+    evaluator.setBatchSize(10);
+
+    int misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
+    System.out.println("\rInitial misclassifications: " + misclassifications + " / " + testingLabels.rows() + '\n');
+
+    for (int i = 0; i < 100; i++) {
+      System.out.println("Epoch " + (i + 1) + " ===============");
+
+      evaluator.train(trainingFeatures, trainingLabels);
+      misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
+      System.out.println("\rmisclassifications: " + misclassifications + " / " + testingLabels.rows() + '\n');
+    }
+  }
+
+  private static void runAssignment4() {
+    System.out.println("ASSIGNMENT 4: Running the finite differencing test for the sample neural network.\n\n");
+
+    NeuralNetwork neuralNetwork = new NeuralNetwork();
+
+    neuralNetwork.addLayer(new ConvolutionLayer(new int[]{8, 8}, new int[]{5, 5, 4}, new int[]{8, 8, 4}));
+    neuralNetwork.addLayer(new LeakyRectifierLayer(8 * 8 * 4));
+    neuralNetwork.addLayer(new MaxPooling2DLayer(new int[]{8, 8, 4}));
+    neuralNetwork.addLayer(new ConvolutionLayer(new int[]{4, 4, 4}, new int[]{3, 3, 4, 6}, new int[]{4, 4, 1, 6}));
+    neuralNetwork.addLayer(new LeakyRectifierLayer(4 * 4 * 6));
+    neuralNetwork.addLayer(new MaxPooling2DLayer(new int[]{4, 4, 6}));
+    neuralNetwork.addLayer(new LinearLayer(2 * 2 * 6, 3));
+
+    neuralNetwork.initialize();
+
+    Vector testInput = new Vector(new double[]{
+        0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8,
+        0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6,
+        1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4,
+        2.5, 2.6, 2.7, 2.8, 2.9, 3.0, 3.1, 3.2,
+        3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 4.0,
+        4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8,
+        4.9, 5.0, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6,
+        5.7, 5.8, 5.9, 6.0, 6.1, 6.2, 6.3, 6.4,
+        6.5, 6.6, 6.7, 6.8, 6.9, 7.0, 7.1, 7.2,
+    });
+
+    Vector testOutput = new Vector(new double[]{
+       1.0, 2.0, 3.0
+    });
+
+    Matrix testFeatures = new Matrix(1, 8 * 8);
+    testFeatures.row(0).set(0, testInput);
+
+    Matrix testLabels = new Matrix(1, 3);
+    testLabels.row(0).set(0, testOutput);
+
+    GradientEvaluator gradientEvaluator = new GradientEvaluator(neuralNetwork);
+    gradientEvaluator.setTestData(testFeatures, testLabels);
+
+    gradientEvaluator.checkAgainstFiniteDifferencing();
+  }
+
   public static void main(String[] args) {
-    runAssignment3();
+    runMNISTwithCNN();
   }
 }

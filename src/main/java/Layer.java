@@ -1,4 +1,8 @@
 abstract class Layer {
+  public enum LayerType {
+    LINEAR, TANH, LEAKY_RECTIFIER, CONVOLUTION, MAX_POOLING_2D
+  }
+
   private int inputs;
   private int outputs;
 
@@ -14,6 +18,10 @@ abstract class Layer {
   }
 
   public abstract LayerType getLayerType();
+
+  public abstract Layer copy();
+
+  public abstract void initialize();
 
   public int getInputs() {
     return inputs;
