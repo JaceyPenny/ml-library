@@ -1,5 +1,3 @@
-import java.util.function.Supplier;
-
 public class LinearLayer extends ConnectedLayer<Matrix, Vector> {
 
   public LinearLayer(int inputs, int outputs) {

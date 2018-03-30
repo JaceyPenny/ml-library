@@ -3,7 +3,6 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 /**
  * This stores a matrix, A.K.A. data set, A.K.A. table. Each element is
