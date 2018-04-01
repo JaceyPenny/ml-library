@@ -39,6 +39,18 @@ public class ConvolutionLayer extends ConnectedLayer<Tensor, Vector> {
   }
 
   @Override
+  public void initialize() {
+    super.initialize();
+
+    setActivation(new Tensor(outputDimensions));
+    setWeights(new Tensor(filterDimensions));
+    setBias(new Vector(getWeights().getLastDimension()));
+
+    final int filterElements = Tensor.countElements(filterDimensions);
+    fillAll(() -> Math.max(0.01, 1.0 / filterElements) * Main.RANDOM.nextGaussian());
+  }
+
+  @Override
   public void setWeights(Tensor filter) {
     Tensor filterTensor = Tensor.asTensor(filter, filterDimensions);
 
@@ -112,18 +124,6 @@ public class ConvolutionLayer extends ConnectedLayer<Tensor, Vector> {
   }
 
   @Override
-  public void initialize() {
-    super.initialize();
-
-    setActivation(new Tensor(outputDimensions));
-    setWeights(new Tensor(filterDimensions));
-    setBias(new Vector(getWeights().getLastDimension()));
-
-    final int filterElements = Tensor.countElements(filterDimensions);
-    fillAll(() -> Math.max(0.01, 1.0 / filterElements) * Main.RANDOM.nextGaussian());
-  }
-
-  @Override
   void resetGradient() {
     if (getWeightsGradient() == null) {
       setWeightsGradient(new Tensor(filterDimensions));
@@ -142,11 +142,11 @@ public class ConvolutionLayer extends ConnectedLayer<Tensor, Vector> {
 
     Tensor.convolvePerFilter(input, getBlame(), getWeightsGradient());
 
-    Tensor[] blameGradients = getBlame().splitByLastDimension();
+    Tensor[] blameSlices = getBlame().splitByLastDimension();
 
     for (int i = 0; i < getBiasGradient().size(); i++) {
-      Tensor singleBlameGradient = blameGradients[i];
-      getBiasGradient().set(i, singleBlameGradient.reduce());
+      Tensor blameSlice = blameSlices[i];
+      getBiasGradient().set(i, blameSlice.reduce());
     }
   }
 }
