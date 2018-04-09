@@ -16,7 +16,7 @@ public class LinearLayer extends ConnectedLayer<Matrix, Vector> {
     setWeights(new Matrix(getOutputs(), getInputs()));
     setBias(new Vector(getOutputs()));
 
-    fillAll(() -> Math.max(0.03, 1.0 / getInputs()) * Main.RANDOM.nextGaussian());
+    fillAll(() -> Math.max(0, 1.0 / getInputs()) * Main.RANDOM.nextGaussian());
   }
 
   @Override
@@ -115,6 +115,25 @@ public class LinearLayer extends ConnectedLayer<Matrix, Vector> {
   @Override
   void updateGradient(Vector x) {
     addOuterProductToMatrix(getBlame(), x, getWeightsGradient());
+
+    switch (getRegularizationType()) {
+      case L1:
+        for (int i = 0; i < getWeights().size() - 1; i++) {
+          double sign = -1 * Math.signum(getWeights().get(i));
+          getWeightsGradient().set(i, getWeightsGradient().get(i) + sign * getRegularizationAmount());
+        }
+        break;
+      case L2:
+        for (int i = 0; i < getWeights().size() - 1; i++) {
+          double shift = getWeights().get(i) * getRegularizationAmount();
+          getWeightsGradient().set(i, getWeightsGradient().get(i) - shift);
+        }
+        break;
+      case NONE:
+      default:
+        break;
+    }
+
     getBiasGradient().add(getBlame());
   }
 }

@@ -405,7 +405,7 @@ public class Matrix implements Spatial<Matrix> {
   }
 
   /**
-   *  Returns the number of rows in the matrix
+   * Returns the number of rows in the matrix
    */
   public int rows() {
     return data.size();
@@ -570,6 +570,17 @@ public class Matrix implements Spatial<Matrix> {
     return value;
   }
 
+  public void copyBlock(
+      int destRow,
+      int destCol,
+      Matrix that,
+      int rowBegin,
+      int colBegin,
+      int rowCount,
+      int colCount) {
+    copyBlock(destRow, destCol, that, rowBegin, colBegin, rowCount, colCount, true);
+  }
+
   /**
    * Copies the specified rectangular portion of that matrix, and puts it in the specified location in this matrix.
    */
@@ -580,7 +591,8 @@ public class Matrix implements Spatial<Matrix> {
       int rowBegin,
       int colBegin,
       int rowCount,
-      int colCount) {
+      int colCount,
+      boolean copyMetadata) {
     if (destRow + rowCount > this.rows() || destCol + colCount > this.cols()) {
       throw new IllegalArgumentException("Out of range for destination matrix.");
     } else if (rowBegin + rowCount > that.rows() || colBegin + colCount > that.cols()) {
@@ -588,8 +600,10 @@ public class Matrix implements Spatial<Matrix> {
     }
 
     // Copy the specified region of meta-data
-    for (int i = 0; i < colCount; i++) {
-      that.getMetadata().copyAttributeToMetadata(this.metadata, colBegin + i, destCol + i);
+    if (copyMetadata) {
+      for (int i = 0; i < colCount; i++) {
+        that.getMetadata().copyAttributeToMetadata(this.metadata, colBegin + i, destCol + i);
+      }
     }
 
     // Copy the specified region of data
@@ -666,6 +680,14 @@ public class Matrix implements Spatial<Matrix> {
     for (double[] vec : data) {
       for (int i = 0; i < vec.length; i++)
         vec[i] *= scalar;
+    }
+  }
+
+  public void addAll(double value) {
+    for (int r = 0; r < rows(); r++) {
+      for (int c = 0; c < cols(); c++) {
+        this.set(r, c, get(r, c) + value);
+      }
     }
   }
 

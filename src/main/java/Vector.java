@@ -190,7 +190,7 @@ public class Vector implements Spatial<Vector> {
     }
   }
 
-  public void addScalar(double scalar) {
+  public void addAll(double scalar) {
     for (int i = 0; i < length; i++) {
       set(i, get(i) + scalar);
     }

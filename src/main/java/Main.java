@@ -2,6 +2,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Random;
 
 class Main {
@@ -177,9 +179,12 @@ class Main {
 
   private static PrintWriter getPrintWriterWithName(String fileName)
       throws IOException {
-    File outputDirectory = new File("output/" + EXECUTION_TIMESTAMP);
+    Date date = new Date(EXECUTION_TIMESTAMP);
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy_MM_dd_hh-mm-ss");
+    String dateString = simpleDateFormat.format(date);
+    File outputDirectory = new File("output/" + dateString);
     outputDirectory.mkdirs();
-    File outputFile = new File("output/" + EXECUTION_TIMESTAMP + "/" + fileName);
+    File outputFile = new File("output/" + dateString + "/" + fileName);
     outputFile.createNewFile();
 
     return new PrintWriter(new FileOutputStream(outputFile));
@@ -285,7 +290,93 @@ class Main {
     gradientEvaluator.checkAgainstFiniteDifferencing();
   }
 
+  public static void runAssignment5() {
+    System.out.println("ASSIGNMENT 5: Run the US Dept of Labor Statistics data through a custom network.");
+
+    Matrix features = new Matrix(357, 1);
+    for (int i = 0; i < features.rows(); i++) {
+      features.set(i, 0, i / 256.0);
+    }
+
+    Matrix labels = Matrix.fromARFF("data/labor_stats.arff").copyBlock(0, 0, 357, 1);
+
+    Matrix subFeatures = features.copyBlock(0, 0, 256, 1);
+    Matrix subLabels = labels.copyBlock(0, 0, 256, 1);
+
+    LinearLayer outputLayer = new LinearLayer(101, 1);
+
+    NeuralNetwork neuralNetwork = new NeuralNetwork();
+    neuralNetwork.addLayer(new Assignment5LinearLayer());
+    neuralNetwork.addLayer(new Assignment5ActivationLayer());
+    neuralNetwork.addLayer(outputLayer);
+    neuralNetwork.setLearningRate(0.005);
+
+    Matrix csvOutput = new Matrix(357, 5);
+    csvOutput.copyBlock(0, 0, features, 0, 0, 357, 1, false);
+    csvOutput.copyBlock(0, 1, labels, 0, 0, 357, 1, false);
+
+    LearnerEvaluator<NeuralNetwork> evaluator = new LearnerEvaluator<>(neuralNetwork);
+    evaluator.setTrainingType(LearnerEvaluator.TrainingType.MINI_BATCH);
+    evaluator.setBatchSize(8);
+
+    neuralNetwork.initialize();
+    evaluator.train(subFeatures, subLabels, 10);
+
+    // predict without regularization
+    Vector input = new Vector(1);
+    for (int i = 0; i < 357; i++) {
+      input.set(0, i / 256.0);
+      Vector resultVector = neuralNetwork.predict(input);
+      csvOutput.set(i, 2, resultVector.get(0));
+    }
+
+    outputLayer.setRegularizationType(ConnectedLayer.RegularizationType.L1);
+    outputLayer.setRegularizationAmount(0.01);
+
+    neuralNetwork.initialize();
+    evaluator.train(subFeatures, subLabels, 10);
+
+    // predict with L1 regularization
+    for (int i = 0; i < 357; i++) {
+      input.set(0, i / 256.0);
+      double result = neuralNetwork.predict(input).get(0);
+      csvOutput.set(i, 3, result);
+    }
+
+    outputLayer.setRegularizationType(ConnectedLayer.RegularizationType.L2);
+    outputLayer.setRegularizationAmount(0.01);
+
+    neuralNetwork.initialize();
+    evaluator.train(subFeatures, subLabels, 10);
+
+    // predict with L2 regularization
+    for (int i = 0; i < 357; i++) {
+      input.set(0, i / 256.0);
+      double result = neuralNetwork.predict(input).get(0);
+      csvOutput.set(i, 4, result);
+    }
+
+    PrintWriter writer;
+    try {
+      writer = getPrintWriterWithName("assignment5output.csv");
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.out.println("Couldn't open file for output.");
+      return;
+    }
+
+    // print values to console
+    writer.println("Feature,Label,None,L1,L2");
+    for (int i = 0; i < 357; i++) {
+      Vector row = csvOutput.row(i);
+      String output = row.get(0) + "," + row.get(1) + "," + row.get(2) + "," + row.get(3) + "," + row.get(4);
+      writer.println(output);
+    }
+
+    writer.close();
+  }
+
   public static void main(String[] args) {
-    runAssignment4();
+    runAssignment5();
   }
 }

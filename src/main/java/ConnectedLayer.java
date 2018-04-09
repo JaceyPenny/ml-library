@@ -1,11 +1,18 @@
 import java.util.function.Supplier;
 
 public abstract class ConnectedLayer<T extends Spatial, U extends Spatial> extends Layer {
+  public enum RegularizationType {
+    NONE, L1, L2
+  }
+
   private T weights;
   private U bias;
 
   private T weightsGradient;
   private U biasGradient;
+
+  private RegularizationType regularizationType = RegularizationType.NONE;
+  private double regularizationAmount = 0;
 
   ConnectedLayer(int inputs, int outputs) {
     super(inputs, outputs);
@@ -14,6 +21,22 @@ public abstract class ConnectedLayer<T extends Spatial, U extends Spatial> exten
   @Override
   public void initialize() {
     resetGradient();
+  }
+
+  protected RegularizationType getRegularizationType() {
+    return regularizationType;
+  }
+
+  public void setRegularizationType(RegularizationType regularizationType) {
+    this.regularizationType = regularizationType;
+  }
+
+  protected double getRegularizationAmount() {
+    return regularizationAmount;
+  }
+
+  public void setRegularizationAmount(double regularizationAmount) {
+    this.regularizationAmount = regularizationAmount;
   }
 
   @Override

@@ -148,6 +148,12 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
     return Math.sqrt(totalError / repetitions / features.rows());
   }
 
+  void train(Matrix features, Matrix labels, int repetitions) {
+    for (int i = 0; i < repetitions; i++) {
+      train(features, labels);
+    }
+  }
+
   void train(Matrix features, Matrix labels) {
     switch (trainingType) {
       case BASIC:

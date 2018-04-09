@@ -9,6 +9,8 @@ public interface Spatial<T extends Spatial> {
 
   void scale(double scale);
 
+  void addAll(double value);
+
   double get(int index);
 
   void set(int index, double value);

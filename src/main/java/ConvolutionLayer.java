@@ -112,7 +112,7 @@ public class ConvolutionLayer extends ConnectedLayer<Tensor, Vector> {
     Tensor[] activationLayers = getActivation().splitByLastDimension();
 
     for (int i = 0; i < activationLayers.length; i++) {
-      activationLayers[i].addScalar(getBias().get(i));
+      activationLayers[i].addAll(getBias().get(i));
     }
   }
 
