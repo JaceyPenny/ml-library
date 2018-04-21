@@ -6,13 +6,10 @@ import com.jace.layer.*;
 import com.jace.learner.NeuralNetwork;
 import com.jace.math.Matrix;
 import com.jace.math.Vector;
+import com.jace.util.FileManager;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Random;
 
 public class Main {
@@ -121,14 +118,19 @@ public class Main {
     PrintWriter miniBatchMisclassificationsTesting;
 
     try {
-      stochasticMisclassificationsTraining = getPrintWriterWithName("stochastic_mc_train.csv");
-      stochasticMisclassificationsTesting = getPrintWriterWithName("stochastic_mc_test.csv");
+      stochasticMisclassificationsTraining =
+          FileManager.getPrintWriterWithName("stochastic_mc_train.csv");
+      stochasticMisclassificationsTesting =
+          FileManager.getPrintWriterWithName("stochastic_mc_test.csv");
 
       stochasticMisclassificationsTraining.println("steps,time,misclassifications");
       stochasticMisclassificationsTesting.println("steps,time,misclassifications");
 
-      miniBatchMisclassificationsTraining = getPrintWriterWithName("minibatch_mc_train.csv");
-      miniBatchMisclassificationsTesting = getPrintWriterWithName("minibatch_mc_test.csv");
+      miniBatchMisclassificationsTraining =
+          FileManager.getPrintWriterWithName("minibatch_mc_train.csv");
+      miniBatchMisclassificationsTesting =
+          FileManager.getPrintWriterWithName("minibatch_mc_test.csv");
+
       miniBatchMisclassificationsTraining.println("steps,time,misclassifications");
       miniBatchMisclassificationsTesting.println("steps,time,misclassifications");
     } catch (IOException ioException) {
@@ -184,19 +186,6 @@ public class Main {
     stochasticMisclassificationsTesting.close();
     miniBatchMisclassificationsTraining.close();
     miniBatchMisclassificationsTesting.close();
-  }
-
-  private static PrintWriter getPrintWriterWithName(String fileName)
-      throws IOException {
-    Date date = new Date(EXECUTION_TIMESTAMP);
-    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy_MM_dd_hh-mm-ss");
-    String dateString = simpleDateFormat.format(date);
-    File outputDirectory = new File("output/" + dateString);
-    outputDirectory.mkdirs();
-    File outputFile = new File("output/" + dateString + "/" + fileName);
-    outputFile.createNewFile();
-
-    return new PrintWriter(new FileOutputStream(outputFile));
   }
 
   private static void runMNISTwithCNN() {
@@ -367,7 +356,7 @@ public class Main {
 
     PrintWriter writer;
     try {
-      writer = getPrintWriterWithName("assignment5output.csv");
+      writer = FileManager.getPrintWriterWithName("assignment5output.csv");
     } catch (Exception e) {
       e.printStackTrace();
       System.out.println("Couldn't open file for output.");

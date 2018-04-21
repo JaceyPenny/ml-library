@@ -15,6 +15,8 @@ public class ConvolutionLayerTest extends BaseTest {
         new int[]{3, 3, 2},   // Filter size
         new int[]{4, 4, 2});  // Output size
 
+    testLayer.initialize();
+
     Vector filterVector = new Vector(new double[]{
         0.01, 0.02, 0.03,
         0.04, 0.05, 0.06,
