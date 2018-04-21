@@ -1,3 +1,5 @@
+import com.jace.math.Tensor;
+import com.jace.math.Vector;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -8,7 +10,7 @@ import static org.junit.Assert.assertEquals;
 public class TensorTest extends BaseTest {
 
   @Test
-  public void testCountElements_small() throws Exception {
+  public void testCountElements_small() {
     int[] dimensions = new int[]{1, 2, 3};
     int actualElements = Tensor.countElements(dimensions);
     int expectedElements = 1 * 2 * 3;
@@ -17,7 +19,7 @@ public class TensorTest extends BaseTest {
   }
 
   @Test
-  public void testCountElements_big() throws Exception {
+  public void testCountElements_big() {
     int[] dimensions = new int[]{32, 45, 2, 34, 123, 3, 10};
     int actualElements = Tensor.countElements(dimensions);
     int expectedElements = 32 * 45 * 2 * 34 * 123 * 3 * 10;
@@ -26,7 +28,7 @@ public class TensorTest extends BaseTest {
   }
 
   @Test
-  public void testToString() throws Exception {
+  public void testToString() {
     Vector testVector = new Vector(new double[]{
         0.1, 0.2, 0.3, 0.4,
         0.5, 0.6, 0.7, 0.8,

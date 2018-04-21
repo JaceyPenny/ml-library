@@ -1,3 +1,7 @@
+package com.jace.layer;
+
+import com.jace.math.Vector;
+
 public class LeakyRectifierLayer extends ActivationLayer {
 
   public LeakyRectifierLayer(int inputs) {
@@ -9,18 +13,18 @@ public class LeakyRectifierLayer extends ActivationLayer {
   }
 
   @Override
-  public LayerType getLayerType() {
-    return LayerType.LEAKY_RECTIFIER;
+  public Layer.LayerType getLayerType() {
+    return Layer.LayerType.LEAKY_RECTIFIER;
   }
 
   @Override
-  Vector activate(Vector x) {
+  public Vector activate(Vector x) {
     setActivation(x.map((value) -> (value >= 0) ? value : 0.01 * value));
     return getActivation();
   }
 
   @Override
-  Vector backPropagate() {
+  public Vector backPropagate() {
     Vector result = new Vector(getInputs());
 
     for (int i = 0; i < getInputs(); i++) {

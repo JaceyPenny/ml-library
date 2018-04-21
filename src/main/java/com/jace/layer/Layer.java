@@ -1,4 +1,8 @@
-abstract class Layer {
+package com.jace.layer;
+
+import com.jace.math.Vector;
+
+public abstract class Layer {
   public enum LayerType {
     LINEAR, TANH, LEAKY_RECTIFIER, CONVOLUTION, ASSIGNMENT_5, ASSIGNMENT_5_ACTIVATION, MAX_POOLING_2D
   }
@@ -31,7 +35,7 @@ abstract class Layer {
     return outputs;
   }
 
-  abstract Vector activate(Vector x);
+  public abstract Vector activate(Vector x);
 
   protected void setActivation(Vector vector) {
     this.activation = vector;
@@ -41,7 +45,7 @@ abstract class Layer {
     return activation;
   }
 
-  protected void setBlame(Vector blame) {
+  public void setBlame(Vector blame) {
     this.blame = blame;
   }
 
@@ -49,15 +53,15 @@ abstract class Layer {
     return blame;
   }
 
-  abstract Vector backPropagate();
+  public abstract Vector backPropagate();
 
   abstract void resetGradient();
 
-  abstract void updateGradient(Vector x);
+  public abstract void updateGradient(Vector x);
 
   abstract void applyGradient(double learningRate);
 
-  abstract void applyGradient(double learningRate, double momentum);
+  public abstract void applyGradient(double learningRate, double momentum);
 
   public String topologyString() {
     String name = getLayerType().toString();

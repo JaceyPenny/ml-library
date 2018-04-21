@@ -1,7 +1,10 @@
+package com.jace.math;
 // ----------------------------------------------------------------
 // The contents of this file are distributed under the CC0 license.
 // See http://creativecommons.org/publicdomain/zero/1.0/
 // ----------------------------------------------------------------
+
+import com.jace.util.Json;
 
 import java.util.Arrays;
 import java.util.function.Function;
@@ -164,7 +167,7 @@ public class Vector implements Spatial<Vector> {
 
   public void set(int startIndex, Vector values) {
     if (startIndex < 0 || startIndex >= length) {
-      throw new IllegalArgumentException("startIndex is outside of the Vector bounds");
+      throw new IllegalArgumentException("startIndex is outside of the com.jace.math.Vector bounds");
     }
 
     int i = startIndex;

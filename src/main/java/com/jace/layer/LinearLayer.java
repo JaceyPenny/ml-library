@@ -1,3 +1,9 @@
+package com.jace.layer;
+
+import com.jace.Main;
+import com.jace.math.Matrix;
+import com.jace.math.Vector;
+
 public class LinearLayer extends ConnectedLayer<Matrix, Vector> {
 
   public LinearLayer(int inputs, int outputs) {
@@ -5,8 +11,8 @@ public class LinearLayer extends ConnectedLayer<Matrix, Vector> {
   }
 
   @Override
-  public LayerType getLayerType() {
-    return LayerType.LINEAR;
+  public Layer.LayerType getLayerType() {
+    return Layer.LayerType.LINEAR;
   }
 
   @Override
@@ -38,7 +44,7 @@ public class LinearLayer extends ConnectedLayer<Matrix, Vector> {
   }
 
   @Override
-  Vector activate(Vector x) {
+  public Vector activate(Vector x) {
     Matrix xMatrix = x.asMatrix(Matrix.VectorType.COLUMN);
     Matrix Mx = Matrix.multiply(getWeights(), xMatrix);
 
@@ -105,7 +111,7 @@ public class LinearLayer extends ConnectedLayer<Matrix, Vector> {
   }
 
   @Override
-  protected Vector backPropagate() {
+  public Vector backPropagate() {
     Matrix blameMatrix = getBlame().asMatrix(Matrix.VectorType.COLUMN);
 
     Matrix previousBlameMatrix = Matrix.multiply(getWeights(), blameMatrix, true, false);
@@ -113,7 +119,7 @@ public class LinearLayer extends ConnectedLayer<Matrix, Vector> {
   }
 
   @Override
-  void updateGradient(Vector x) {
+  public void updateGradient(Vector x) {
     addOuterProductToMatrix(getBlame(), x, getWeightsGradient());
 
     switch (getRegularizationType()) {

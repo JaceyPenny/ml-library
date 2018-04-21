@@ -1,3 +1,12 @@
+package com.jace.evaluator;
+
+import com.jace.layer.ConnectedLayer;
+import com.jace.layer.Layer;
+import com.jace.learner.NeuralNetwork;
+import com.jace.math.Matrix;
+import com.jace.math.Spatial;
+import com.jace.math.Vector;
+
 import java.util.HashMap;
 import java.util.Map;
 

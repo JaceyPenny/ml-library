@@ -1,9 +1,12 @@
-// ----------------------------------------------------------------
+package com.jace.learner;// ----------------------------------------------------------------
 // The contents of this file are distributed under the CC0 license.
 // See http://creativecommons.org/publicdomain/zero/1.0/
 // ----------------------------------------------------------------
 
-class BaselineLearner implements SupervisedLearner {
+import com.jace.math.Matrix;
+import com.jace.math.Vector;
+
+public class BaselineLearner implements SupervisedLearner {
   double[] mode;
 
   @Override

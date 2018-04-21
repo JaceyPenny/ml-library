@@ -1,3 +1,9 @@
+package com.jace.layer;
+
+import com.jace.Main;
+import com.jace.math.Tensor;
+import com.jace.math.Vector;
+
 import java.util.Arrays;
 
 public class ConvolutionLayer extends ConnectedLayer<Tensor, Vector> {
@@ -77,8 +83,8 @@ public class ConvolutionLayer extends ConnectedLayer<Tensor, Vector> {
   }
 
   @Override
-  public LayerType getLayerType() {
-    return LayerType.CONVOLUTION;
+  public Layer.LayerType getLayerType() {
+    return Layer.LayerType.CONVOLUTION;
   }
 
   @Override
@@ -92,7 +98,7 @@ public class ConvolutionLayer extends ConnectedLayer<Tensor, Vector> {
   }
 
   @Override
-  Vector activate(Vector x) {
+  public Vector activate(Vector x) {
     Tensor input = Tensor.asTensor(x, inputDimensions);
 
     getActivation().fill(0);
@@ -117,7 +123,7 @@ public class ConvolutionLayer extends ConnectedLayer<Tensor, Vector> {
   }
 
   @Override
-  Vector backPropagate() {
+  public Vector backPropagate() {
     Tensor result = new Tensor(inputDimensions);
     Tensor.convolvePerLayer(getWeights(), getBlame(), result, true);
     return result;
@@ -137,7 +143,7 @@ public class ConvolutionLayer extends ConnectedLayer<Tensor, Vector> {
   }
 
   @Override
-  void updateGradient(Vector x) {
+  public void updateGradient(Vector x) {
     Tensor input = Tensor.asTensor(x, inputDimensions);
 
     Tensor.convolvePerFilter(input, getBlame(), getWeightsGradient());

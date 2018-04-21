@@ -1,3 +1,12 @@
+package com.jace;
+
+import com.jace.evaluator.GradientEvaluator;
+import com.jace.evaluator.LearnerEvaluator;
+import com.jace.layer.*;
+import com.jace.learner.NeuralNetwork;
+import com.jace.math.Matrix;
+import com.jace.math.Vector;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -6,7 +15,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
 
-class Main {
+public class Main {
   public static final Random RANDOM = new Random();
 
   private static int EPOCHS = 10;
@@ -374,6 +383,7 @@ class Main {
     }
 
     writer.close();
+    System.out.println();
   }
 
   public static void main(String[] args) {

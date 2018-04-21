@@ -1,3 +1,8 @@
+package com.jace.layer;
+
+import com.jace.math.Tensor;
+import com.jace.math.Vector;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -66,8 +71,8 @@ public class MaxPooling2DLayer extends ActivationLayer {
   }
 
   @Override
-  public LayerType getLayerType() {
-    return LayerType.MAX_POOLING_2D;
+  public Layer.LayerType getLayerType() {
+    return Layer.LayerType.MAX_POOLING_2D;
   }
 
   @Override
@@ -76,7 +81,7 @@ public class MaxPooling2DLayer extends ActivationLayer {
   }
 
   @Override
-  Vector activate(Vector x) {
+  public Vector activate(Vector x) {
     Tensor input = new Tensor(x, inputDimensions);
     Tensor activation = new Tensor(getActivation(), outputDimensions);
 
@@ -113,7 +118,7 @@ public class MaxPooling2DLayer extends ActivationLayer {
   }
 
   @Override
-  Vector backPropagate() {
+  public Vector backPropagate() {
     Tensor result = new Tensor(inputDimensions);
     Tensor blame = getBlame();
 

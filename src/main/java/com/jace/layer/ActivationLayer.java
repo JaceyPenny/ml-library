@@ -1,3 +1,7 @@
+package com.jace.layer;
+
+import com.jace.math.Vector;
+
 public abstract class ActivationLayer extends Layer {
   ActivationLayer(int inputs, int outputs) {
     super(inputs, outputs);
@@ -14,7 +18,7 @@ public abstract class ActivationLayer extends Layer {
   }
 
   @Override
-  void updateGradient(Vector x) {
+  public void updateGradient(Vector x) {
 
   }
 
@@ -24,7 +28,7 @@ public abstract class ActivationLayer extends Layer {
   }
 
   @Override
-  void applyGradient(double learningRate, double momentum) {
+  public void applyGradient(double learningRate, double momentum) {
 
   }
 }

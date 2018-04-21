@@ -1,3 +1,6 @@
+import com.jace.layer.LinearLayer;
+import com.jace.math.Matrix;
+import com.jace.math.Vector;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

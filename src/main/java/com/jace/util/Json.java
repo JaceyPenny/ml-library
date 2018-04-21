@@ -1,3 +1,5 @@
+package com.jace.util;
+
 // ----------------------------------------------------------------
 // The contents of this file are distributed under the CC0 license.
 // See http://creativecommons.org/publicdomain/zero/1.0/
@@ -9,7 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
-abstract class Json {
+public abstract class Json {
   abstract void write(StringBuilder sb);
 
   public static Json newObject() {
@@ -189,7 +191,7 @@ abstract class Json {
     String str;
     int pos;
 
-    StringParser(String s) {
+    public StringParser(String s) {
       str = s;
       pos = 0;
     }
@@ -198,15 +200,15 @@ abstract class Json {
       return str.length() - pos;
     }
 
-    char peek() {
+    public char peek() {
       return (pos >= str.length()) ? 0 : str.charAt(pos);
     }
 
-    void advance(int n) {
+    public void advance(int n) {
       pos += n;
     }
 
-    void skipWhitespace() {
+    public void skipWhitespace() {
       while (pos < str.length() && str.charAt(pos) <= ' ')
         pos++;
     }
@@ -217,7 +219,7 @@ abstract class Json {
       pos += s.length();
     }
 
-    String until(char c) {
+    public String until(char c) {
       int i = pos;
       while (i < str.length() && str.charAt(i) != c)
         i++;
@@ -244,7 +246,7 @@ abstract class Json {
       return s;
     }
 
-    String untilQuoteSensitive(char a, char b) {
+    public String untilQuoteSensitive(char a, char b) {
       if (peek() == '"') {
         advance(1);
         String s = "\"" + until('"') + "\"";

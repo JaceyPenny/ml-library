@@ -1,3 +1,8 @@
+package com.jace.learner;
+
+import com.jace.layer.Layer;
+import com.jace.math.Vector;
+
 import java.util.ArrayList;
 import java.util.List;
 

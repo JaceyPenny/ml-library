@@ -1,5 +1,10 @@
+package com.jace.layer;
+
+import com.jace.math.Spatial;
+
 import java.util.function.Supplier;
 
+@SuppressWarnings({"unchecked", "WeakerAccess"})
 public abstract class ConnectedLayer<T extends Spatial, U extends Spatial> extends Layer {
   public enum RegularizationType {
     NONE, L1, L2
@@ -23,7 +28,7 @@ public abstract class ConnectedLayer<T extends Spatial, U extends Spatial> exten
     resetGradient();
   }
 
-  protected RegularizationType getRegularizationType() {
+  RegularizationType getRegularizationType() {
     return regularizationType;
   }
 
@@ -31,7 +36,7 @@ public abstract class ConnectedLayer<T extends Spatial, U extends Spatial> exten
     this.regularizationType = regularizationType;
   }
 
-  protected double getRegularizationAmount() {
+  double getRegularizationAmount() {
     return regularizationAmount;
   }
 
@@ -45,7 +50,7 @@ public abstract class ConnectedLayer<T extends Spatial, U extends Spatial> exten
     biasGradient.fill(0);
   }
 
-  protected void fillAll(Supplier<Double> supplier) {
+  void fillAll(Supplier<Double> supplier) {
     getWeights().fill(supplier);
     getBias().fill(supplier);
   }
@@ -56,7 +61,7 @@ public abstract class ConnectedLayer<T extends Spatial, U extends Spatial> exten
   }
 
   @Override
-  void applyGradient(double learningRate, double momentum) {
+  public void applyGradient(double learningRate, double momentum) {
     getWeights().addScaled(getWeightsGradient(), learningRate);
     getBias().addScaled(getBiasGradient(), learningRate);
 

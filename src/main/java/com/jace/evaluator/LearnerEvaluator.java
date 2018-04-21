@@ -1,3 +1,12 @@
+package com.jace.evaluator;
+
+import com.jace.Main;
+import com.jace.layer.LinearLayer;
+import com.jace.learner.NeuralNetwork;
+import com.jace.learner.SupervisedLearner;
+import com.jace.math.Matrix;
+import com.jace.math.Vector;
+
 import java.io.PrintWriter;
 
 public class LearnerEvaluator<T extends SupervisedLearner> {
@@ -118,9 +127,9 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
     return sumSquaredError;
   }
 
-  double crossValidation(Matrix features, Matrix labels, int folds, int repetitions) {
+  public double crossValidation(Matrix features, Matrix labels, int folds, int repetitions) {
     if (!learner.isValid()) {
-      throw new IllegalStateException("Your NeuralNetwork is in an invalid state");
+      throw new IllegalStateException("Your com.jace.learner.NeuralNetwork is in an invalid state");
     }
 
     int dataRows = features.rows();
@@ -148,13 +157,13 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
     return Math.sqrt(totalError / repetitions / features.rows());
   }
 
-  void train(Matrix features, Matrix labels, int repetitions) {
+  public void train(Matrix features, Matrix labels, int repetitions) {
     for (int i = 0; i < repetitions; i++) {
       train(features, labels);
     }
   }
 
-  void train(Matrix features, Matrix labels) {
+  public void train(Matrix features, Matrix labels) {
     switch (trainingType) {
       case BASIC:
         trainBasic(features, labels);
@@ -184,7 +193,7 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
 
   private void trainBasic(Matrix features, Matrix labels) {
     if (!(learner instanceof NeuralNetwork)) {
-      throw new IllegalStateException("Your learner must be a NeuralNetwork.");
+      throw new IllegalStateException("Your learner must be a com.jace.learner.NeuralNetwork.");
     }
 
     NeuralNetwork neuralNetwork = (NeuralNetwork) learner;
@@ -207,12 +216,12 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
   private void trainLinear(Matrix features, Matrix labels) {
     if (!(learner instanceof NeuralNetwork)) {
       throw new IllegalStateException(
-          "To train a linear model, your learner must be a NeuralNetwork");
+          "To train a linear model, your learner must be a com.jace.learner.NeuralNetwork");
     }
 
     NeuralNetwork neuralNetwork = (NeuralNetwork) learner;
     if (!neuralNetwork.isLinearNetwork()) {
-      throw new IllegalStateException("Your NeuralNetwork must have exactly one LinearLayer");
+      throw new IllegalStateException("Your com.jace.learner.NeuralNetwork must have exactly one com.jace.layer.LinearLayer");
     }
 
     if (features.rows() != labels.rows()) {
@@ -256,7 +265,7 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
   public void trainSingleMiniBatch(Matrix features, Matrix labels, int batchSize, int currentBatch) {
     if (!(learner instanceof NeuralNetwork)) {
       throw new IllegalStateException(
-          "To train a linear model, your learner must be a NeuralNetwork");
+          "To train a linear model, your learner must be a com.jace.learner.NeuralNetwork");
     }
 
     NeuralNetwork neuralNetwork = (NeuralNetwork) learner;

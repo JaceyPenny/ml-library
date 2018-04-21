@@ -1,3 +1,6 @@
+import com.jace.layer.ConvolutionLayer;
+import com.jace.math.Tensor;
+import com.jace.math.Vector;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

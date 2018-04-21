@@ -1,3 +1,5 @@
+import com.jace.math.Matrix;
+import com.jace.math.Vector;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

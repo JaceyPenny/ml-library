@@ -1,3 +1,8 @@
+package com.jace.layer;
+
+import com.jace.math.Matrix;
+import com.jace.math.Vector;
+
 public class Assignment5LinearLayer extends LinearLayer {
 
   public Assignment5LinearLayer() {
@@ -27,8 +32,8 @@ public class Assignment5LinearLayer extends LinearLayer {
   }
 
   @Override
-  public LayerType getLayerType() {
-    return LayerType.ASSIGNMENT_5;
+  public Layer.LayerType getLayerType() {
+    return Layer.LayerType.ASSIGNMENT_5;
   }
 
   @Override

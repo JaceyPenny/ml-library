@@ -1,3 +1,5 @@
+package com.jace.math;
+
 import java.util.Arrays;
 
 public class Tensor extends Vector {
@@ -12,7 +14,7 @@ public class Tensor extends Vector {
 
   /**
    * General-purpose constructor. Example: <br>
-   * Tensor t(v, new int[] {5, 7, 3});
+   * com.jace.math.Tensor t(v, new int[] {5, 7, 3});
    */
   public Tensor(Vector values, int[] dimensions) {
     super(values, 0, values.size());
@@ -23,7 +25,7 @@ public class Tensor extends Vector {
 
     if (total != values.size()) {
       throw new RuntimeException(
-          String.format("Mismatching sizes. Vector has %d, Tensor has %d", values.size(), total));
+          String.format("Mismatching sizes. com.jace.math.Vector has %d, com.jace.math.Tensor has %d", values.size(), total));
     }
     initializeDimensionSteps();
   }
@@ -97,7 +99,7 @@ public class Tensor extends Vector {
         result = new Tensor(value, dimensions);
       } else {
         throw new IllegalArgumentException(
-            "The desired dimensions are different than the existing Tensor's dimensions.");
+            "The desired dimensions are different than the existing com.jace.math.Tensor's dimensions.");
       }
     }
 
@@ -134,7 +136,7 @@ public class Tensor extends Vector {
     }
   }
 
-  static void convolvePerFilter(Tensor in, Tensor filter, Tensor out) {
+  public static void convolvePerFilter(Tensor in, Tensor filter, Tensor out) {
     convolvePerFilter(in, filter, out, false);
   }
 
@@ -182,7 +184,7 @@ public class Tensor extends Vector {
     }
 
     if (result.getLastDimension() != 1) {
-      throw new IllegalArgumentException("Expected the result Tensor to have a final dimension of 1.");
+      throw new IllegalArgumentException("Expected the result com.jace.math.Tensor to have a final dimension of 1.");
     }
 
     Tensor[] inputSplit = input.splitByLastDimension();
@@ -194,7 +196,7 @@ public class Tensor extends Vector {
     }
   }
 
-  static void convolve(Tensor in, Tensor filter, Tensor out) {
+  public static void convolve(Tensor in, Tensor filter, Tensor out) {
     convolve(in, filter, out, false);
   }
 
@@ -206,7 +208,7 @@ public class Tensor extends Vector {
    * The result is added to the existing contents of out. It does not replace the existing contents
    * of out. Padding is computed as necessary to fill the out tensor.
    *
-   * @param in         the input Tensor
+   * @param in         the input com.jace.math.Tensor
    * @param filter     the filter to convolve within
    * @param out        the target tensor to add the result to.
    * @param flipFilter whether or not to flip the filter in all dimensions

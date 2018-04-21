@@ -1,3 +1,7 @@
+package com.jace.math;
+
+import com.jace.util.Json;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -392,7 +396,7 @@ public class Matrix implements Spatial<Matrix> {
   }
 
   /**
-   * Adds "n" new rows to the Matrix
+   * Adds "n" new rows to the com.jace.math.Matrix
    */
   public void newRows(int n) {
     for (int i = 0; i < n; i++) {
@@ -762,7 +766,7 @@ public class Matrix implements Spatial<Matrix> {
 
   public Vector serialize() {
     if (rows() == 0 || cols() == 0) {
-      throw new IllegalStateException("Cannot serialize a Matrix with 0 rows or 0 columns.");
+      throw new IllegalStateException("Cannot serialize a com.jace.math.Matrix with 0 rows or 0 columns.");
     }
 
     Vector outputVector = new Vector(rows() * cols());
@@ -894,14 +898,14 @@ public class Matrix implements Spatial<Matrix> {
     metadata.swapColumns(a, b);
   }
 
-  static Matrix multiply(Matrix a, Matrix b) {
+  public static Matrix multiply(Matrix a, Matrix b) {
     return multiply(a, b, false, false);
   }
 
   /**
    * Multiplies two Matrices and returns the result.
    */
-  static Matrix multiply(Matrix a, Matrix b, boolean transposeA, boolean transposeB) {
+  public static Matrix multiply(Matrix a, Matrix b, boolean transposeA, boolean transposeB) {
     Matrix res = new Matrix(transposeA ? a.cols() : a.rows(), transposeB ? b.rows() : b.cols());
     if (transposeA) {
       if (transposeB) {
@@ -1250,7 +1254,7 @@ public class Matrix implements Spatial<Matrix> {
   /**
    * Returns the Moore-Penrose pseudoinverse of this matrix
    */
-  Matrix pseudoInverse() {
+  public Matrix pseudoInverse() {
     SVDResult result;
     int columns = cols();
     int rows = rows();

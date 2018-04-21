@@ -1,3 +1,7 @@
+package com.jace.layer;
+
+import com.jace.math.Vector;
+
 public class Assignment5ActivationLayer extends ActivationLayer {
 
   public Assignment5ActivationLayer() {
@@ -5,8 +9,8 @@ public class Assignment5ActivationLayer extends ActivationLayer {
   }
 
   @Override
-  public LayerType getLayerType() {
-    return LayerType.ASSIGNMENT_5_ACTIVATION;
+  public Layer.LayerType getLayerType() {
+    return Layer.LayerType.ASSIGNMENT_5_ACTIVATION;
   }
 
   @Override
@@ -15,7 +19,7 @@ public class Assignment5ActivationLayer extends ActivationLayer {
   }
 
   @Override
-  Vector activate(Vector x) {
+  public Vector activate(Vector x) {
     Vector map = x.map(Math::sin);
     map.set(100, x.get(100));
 
@@ -25,7 +29,7 @@ public class Assignment5ActivationLayer extends ActivationLayer {
   }
 
   @Override
-  Vector backPropagate() {
+  public Vector backPropagate() {
     Vector previousBlame = new Vector(getBlame().size());
 
     // Set each prevBlame[i] = b[i] * f'(act[i])

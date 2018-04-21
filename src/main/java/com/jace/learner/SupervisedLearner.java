@@ -1,4 +1,8 @@
-interface SupervisedLearner {
+package com.jace.learner;
+
+import com.jace.math.Vector;
+
+public interface SupervisedLearner {
   /**
    * Return the name of this learner
    */

@@ -1,3 +1,5 @@
+package com.jace.math;
+
 import java.util.function.Supplier;
 
 public interface Spatial<T extends Spatial> {
