@@ -375,11 +375,18 @@ public class Main {
   }
 
   public static void runAssignment6() {
+    Console.i("Loading data from \"%s\"...", "data/observations.arff");
+
     Matrix observations = Matrix.fromARFF("data/observations.arff");
     observations.scale(1 / 256.0);
 
+    Console.i("Data finished loading");
+
     GenerativeNeuralNetwork gnn =
         new GenerativeNeuralNetwork(64, 48, 2, observations.rows());
+
+    gnn.setLearningRate(0.1);
+    gnn.setMomentum(0);
 
     gnn.addLayer(new LinearLayer(4, 12));
     gnn.addLayer(new TanhLayer(12));
@@ -420,6 +427,8 @@ public class Main {
 
   public static void main(String[] args) {
     Console.init();
+    Console.setMessageLevel(Console.MessageLevel.DEBUG);
+    
     runAssignment6();
   }
 }

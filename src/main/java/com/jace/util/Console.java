@@ -6,18 +6,18 @@ import java.util.Scanner;
 
 public class Console {
 
-  private static LogType mCurrentLogLevel = LogType.WARNING;
+  private static MessageLevel messageLevel = MessageLevel.WARNING;
 
-  private static SimpleDateFormat mFormatter = new SimpleDateFormat("dd MMM, hh:mm:ssa");
-  private static Scanner mScanner = new Scanner(System.in);
+  private static SimpleDateFormat formatter = new SimpleDateFormat("dd MMM, hh:mm:ssa");
+  private static Scanner scanner = new Scanner(System.in);
 
   private static boolean isAcceptingInput = true;
 
-  private static String mFiftySpaces = "                                        ";
+  private static String fiftySpaces = "                                        ";
 
-  private static boolean mProgressLast = false;
+  private static boolean lastMessageWasProgress = false;
 
-  public enum LogType {
+  public enum MessageLevel {
     ERROR, INFO, WARNING, DEBUG
   }
 
@@ -25,15 +25,19 @@ public class Console {
     System.out.print("ML Library '18\n> ");
   }
 
-  public static void out(LogType type, String message, Object... args) {
-    if (mProgressLast) {
+  public static void setMessageLevel(MessageLevel level) {
+    messageLevel = level;
+  }
+
+  public static void out(MessageLevel type, String message, Object... args) {
+    if (lastMessageWasProgress) {
       System.out.print("\r> ");
-      mProgressLast = false;
+      lastMessageWasProgress = false;
     }
 
     System.out.printf(
         "%s | %s: %s\n> ",
-        mFormatter.format(new Date()),
+        formatter.format(new Date()),
         type.toString(),
         String.format(message, args)
     );
@@ -48,73 +52,73 @@ public class Console {
   }
 
   public static String getLine() {
-    String result = mScanner.nextLine();
+    String result = scanner.nextLine();
     System.out.print("> ");
     return result;
   }
 
   public static String get() {
-    String result = mScanner.next();
+    String result = scanner.next();
     System.out.print("> ");
     return result;
   }
 
   public static int getInt() {
-    int result = mScanner.nextInt();
+    int result = scanner.nextInt();
     System.out.print("> ");
     return result;
   }
 
   public static double getDouble() {
-    double result = mScanner.nextDouble();
+    double result = scanner.nextDouble();
     System.out.print("> ");
     return result;
   }
 
   public static long getLong() {
-    long result = mScanner.nextLong();
+    long result = scanner.nextLong();
     System.out.print("> ");
     return result;
   }
 
   public static boolean getBoolean() {
-    boolean result = mScanner.nextBoolean();
+    boolean result = scanner.nextBoolean();
     System.out.print("> ");
     return result;
   }
 
   public static float getFloat() {
-    float result = mScanner.nextFloat();
+    float result = scanner.nextFloat();
     System.out.print("> ");
     return result;
   }
 
   public static boolean hasNext() {
-    return mScanner.hasNext();
+    return scanner.hasNext();
   }
 
   public static void d(String message, Object... args) {
-    if (mCurrentLogLevel == LogType.DEBUG) {
-      out(LogType.DEBUG, message, args);
+    if (messageLevel == MessageLevel.DEBUG) {
+      out(MessageLevel.DEBUG, message, args);
     }
   }
 
   public static void w(String message, Object... args) {
-    if (mCurrentLogLevel == LogType.DEBUG || mCurrentLogLevel == LogType.WARNING) {
-      out(LogType.WARNING, message, args);
+    if (messageLevel == MessageLevel.DEBUG || messageLevel == MessageLevel.WARNING) {
+      out(MessageLevel.WARNING, message, args);
     }
   }
 
   public static void i(String message, Object... args) {
-    if (mCurrentLogLevel == LogType.DEBUG
-        || mCurrentLogLevel == LogType.WARNING
-        || mCurrentLogLevel == LogType.INFO) {
-      out(LogType.INFO, message, args);
+    if (messageLevel == MessageLevel.DEBUG
+        || messageLevel == MessageLevel.WARNING
+        || messageLevel == MessageLevel.INFO) {
+      out(MessageLevel.INFO, message, args);
     }
   }
 
   public static void e(String message, Object... args) {
-    out(LogType.ERROR, message, args);
+    out(MessageLevel.ERROR, message, args);
   }
 
   public static void exception(Exception e) {
@@ -126,15 +130,15 @@ public class Console {
   }
 
   public static void progress(String message, double percentage) {
-    mProgressLast = true;
+    lastMessageWasProgress = true;
     System.out.print("\r> ");
     System.out.printf(
         "%s | %s: %s: %.1f%%",
-        mFormatter.format(new Date()),
-        LogType.INFO,
+        formatter.format(new Date()),
+        MessageLevel.INFO,
         message,
         percentage
     );
-    System.out.print(mFiftySpaces);
+    System.out.print(fiftySpaces);
   }
 }
