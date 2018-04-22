@@ -26,8 +26,16 @@ public class NeuralNetwork implements SupervisedLearner {
     return newNeuralNetwork;
   }
 
+  public double getMomentum() {
+    return momentum;
+  }
+
   public void setMomentum(double momentum) {
     this.momentum = momentum;
+  }
+
+  public double getLearningRate() {
+    return learningRate;
   }
 
   public void setLearningRate(double learningRate) {

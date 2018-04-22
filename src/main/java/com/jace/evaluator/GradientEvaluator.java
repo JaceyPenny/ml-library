@@ -30,8 +30,6 @@ public class GradientEvaluator extends LearnerEvaluator<NeuralNetwork> {
   }
 
   public void checkAgainstFiniteDifferencing() {
-    double baselineSumSquaredError = computeSumSquaredError();
-
     Map<ConnectedLayer, Spatial> layerToWeightGradientsMap = new HashMap<>();
     Map<ConnectedLayer, Spatial> layerToBiasGradientsMap = new HashMap<>();
 

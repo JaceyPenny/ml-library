@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -675,6 +676,21 @@ public class Matrix implements Spatial<Matrix> {
         set(i, j, supplier.get());
       }
     }
+  }
+
+  /**
+   * Maps this matrix to a matrix of the same size
+   */
+  public Matrix map(Function<Double, Double> mapper) {
+    Matrix newMatrix = new Matrix(rows(), cols());
+
+    for (int i = 0; i < rows(); i++) {
+      for (int j = 0; j < cols(); j++) {
+        newMatrix.row(i).set(j, mapper.apply(row(i).get(j)));
+      }
+    }
+
+    return newMatrix;
   }
 
   /**

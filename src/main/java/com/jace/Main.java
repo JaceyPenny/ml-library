@@ -3,9 +3,11 @@ package com.jace;
 import com.jace.evaluator.GradientEvaluator;
 import com.jace.evaluator.LearnerEvaluator;
 import com.jace.layer.*;
+import com.jace.learner.GenerativeNeuralNetwork;
 import com.jace.learner.NeuralNetwork;
 import com.jace.math.Matrix;
 import com.jace.math.Vector;
+import com.jace.util.Console;
 import com.jace.util.FileManager;
 
 import java.io.IOException;
@@ -31,7 +33,7 @@ public class Main {
 
     LearnerEvaluator<NeuralNetwork> evaluator = new LearnerEvaluator<>(neuralNetwork);
     double finalError = evaluator.crossValidation(features, labels, 10, 5);
-    System.out.println(finalError);
+    Console.i("%f", finalError);
   }
 
   private static void runAssignment2() {
@@ -56,7 +58,7 @@ public class Main {
     Matrix testingLabels = Matrix.fromARFF("data/test_lab.arff").toOneHot();
 
     long endMillis = System.currentTimeMillis();
-    System.out.printf("Loaded all data in %d ms\n", endMillis - startMillis);
+    Console.i("Loaded all data in %d ms", endMillis - startMillis);
 
     trainingFeatures.scale(1.0 / 256.0);
     testingFeatures.scale(1.0 / 256.0);
@@ -68,7 +70,7 @@ public class Main {
 
     // Run a test to show baseline accuracy
     int misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
-    System.out.printf("Before training. Misclassifications: %d\n", misclassifications);
+    Console.i("Before training. Misclassifications: %d", misclassifications);
 
     // Measure and report accuracy
     for (int i = 0; i < EPOCHS; i++) {
@@ -79,7 +81,7 @@ public class Main {
       System.out.printf("Finished training epoch %d: %d ms. Misclassifications: ", i + 1, endTime - startTime);
 
       misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
-      System.out.println(misclassifications);
+      Console.i("%d", misclassifications);
     }
   }
 
@@ -134,13 +136,12 @@ public class Main {
       miniBatchMisclassificationsTraining.println("steps,time,misclassifications");
       miniBatchMisclassificationsTesting.println("steps,time,misclassifications");
     } catch (IOException ioException) {
-      System.err.println("There was an error creating your files.");
+      Console.e("There was an error creating your files.");
       return;
     }
 
     // Run stochastic
-    System.out.println("Running stochastic process...");
-    stochasticNeuralNetwork.printTopology();
+    Console.i("Running stochastic process...");
 
     LearnerEvaluator<NeuralNetwork> stochasticEvaluator = new LearnerEvaluator<>(
         stochasticNeuralNetwork, LearnerEvaluator.TrainingType.STOCHASTIC);
@@ -162,7 +163,7 @@ public class Main {
     }
 
     // Run mini batch
-    System.out.println("Running mini batch process...");
+    Console.i("Running mini batch process...");
     miniBatchNeuralNetwork.printTopology();
 
     LearnerEvaluator<NeuralNetwork> miniBatchEvaluator = new LearnerEvaluator<>(
@@ -211,9 +212,8 @@ public class Main {
     testingFeatures.scale(1.0 / 256.0);
 
     long endMillis = System.currentTimeMillis();
-    System.out.printf("Loaded all data in %d ms\n\n", endMillis - startMillis);
-
-    System.out.println("Running MNIST Classification example...\n");
+    Console.i("Loaded all data in %d ms", endMillis - startMillis);
+    Console.i("Running MNIST classification example...");
 
     NeuralNetwork neuralNetwork = new NeuralNetwork();
     neuralNetwork.setLearningRate(0.01);
@@ -235,19 +235,19 @@ public class Main {
     evaluator.setBatchSize(10);
 
     int misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
-    System.out.println("\rInitial misclassifications: " + misclassifications + " / " + testingLabels.rows() + '\n');
+    Console.i("Initial misclassifications: %d / %d", misclassifications, testingLabels.rows());
 
     for (int i = 0; i < 100; i++) {
-      System.out.println("Epoch " + (i + 1) + " ===============");
+      Console.i("Epoch %d ==============", i + 1);
 
       evaluator.train(trainingFeatures, trainingLabels);
       misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
-      System.out.println("\rmisclassifications: " + misclassifications + " / " + testingLabels.rows() + '\n');
+      Console.i("Misclassifications: %d / %d", misclassifications, testingLabels.rows());
     }
   }
 
   private static void runAssignment4() {
-    System.out.println("ASSIGNMENT 4: Running the finite differencing test for the sample neural network.\n\n");
+    Console.i("ASSIGNMENT 4: Running the finite differencing test for the sample neural network.\n\n");
 
     NeuralNetwork neuralNetwork = new NeuralNetwork();
 
@@ -273,7 +273,7 @@ public class Main {
     });
 
     Vector testOutput = new Vector(new double[]{
-       1.0, 2.0, 3.0
+        1.0, 2.0, 3.0
     });
 
     Matrix testFeatures = new Matrix(1, 8 * 8);
@@ -289,7 +289,7 @@ public class Main {
   }
 
   public static void runAssignment5() {
-    System.out.println("ASSIGNMENT 5: Run the US Dept of Labor Statistics data through a custom network.");
+    Console.i("ASSIGNMENT 5: Run the US Dept of Labor Statistics data through a custom network.");
 
     Matrix features = new Matrix(357, 1);
     for (int i = 0; i < features.rows(); i++) {
@@ -358,8 +358,8 @@ public class Main {
     try {
       writer = FileManager.getPrintWriterWithName("assignment5output.csv");
     } catch (Exception e) {
-      e.printStackTrace();
-      System.out.println("Couldn't open file for output.");
+      Console.e("Couldn't open file for output.");
+      Console.exception(e);
       return;
     }
 
@@ -372,10 +372,54 @@ public class Main {
     }
 
     writer.close();
-    System.out.println();
+  }
+
+  public static void runAssignment6() {
+    Matrix observations = Matrix.fromARFF("data/observations.arff");
+    observations.scale(1 / 256.0);
+
+    GenerativeNeuralNetwork gnn =
+        new GenerativeNeuralNetwork(64, 48, 2, observations.rows());
+
+    gnn.addLayer(new LinearLayer(4, 12));
+    gnn.addLayer(new TanhLayer(12));
+    gnn.addLayer(new LinearLayer(12, 12));
+    gnn.addLayer(new TanhLayer(12));
+    gnn.addLayer(new LinearLayer(12, 3));
+    gnn.addLayer(new TanhLayer(3));
+
+    gnn.initialize();
+
+    gnn.trainUnsupervised(observations);
+
+    Vector imageVector = new Vector(64 * 48 * 3);
+
+    Vector state = new Vector(4);
+
+    for (int w = 0; w < 64; w++) {
+      for (int h = 0; h < 48; h++) {
+        state.set(0, w / 64.0);
+        state.set(1, h / 48.0);
+
+        Vector color = gnn.predict(state);
+
+        int position = (h * 64 + w) * 3;
+
+        imageVector.set(position, color.get(0));
+        imageVector.set(position + 1, color.get(1));
+        imageVector.set(position + 2, color.get(2));
+      }
+    }
+
+    try {
+      FileManager.writeImageFromVector(imageVector, 64, 48);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   public static void main(String[] args) {
-    runAssignment5();
+    Console.init();
+    runAssignment6();
   }
 }

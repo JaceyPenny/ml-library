@@ -6,6 +6,7 @@ import com.jace.learner.NeuralNetwork;
 import com.jace.learner.SupervisedLearner;
 import com.jace.math.Matrix;
 import com.jace.math.Vector;
+import com.jace.util.Console;
 
 import java.io.PrintWriter;
 
@@ -73,13 +74,10 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
   public int countMisclassifications(Matrix features, Matrix labels, boolean isTraining) {
     int misclassifications = 0;
 
-    System.out.print("Counting misclassifications: 0.0%                  ");
+    Console.progress("Counting misclassifications", 0);
 
     for (int row = 0; row < features.rows(); row++) {
-      System.out.printf(
-          "\rCounting misclassifications: %.1f%%               ",
-          row / (double) features.rows() * 100);
-
+      Console.progress("Counting misclassifications", row / (double) features.rows() * 100);
       Vector output = learner.predict(features.row(row));
       int predictedNumber = output.maxIndex();
 
@@ -88,7 +86,7 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
       }
     }
 
-    System.out.print("\rCounting misclassifications: 100.0%                       ");
+    Console.progress("Counting misclassifications", 100);
     writeMisclassifications((double) misclassifications / features.rows(), isTraining);
     return misclassifications;
   }
@@ -247,15 +245,15 @@ public class LearnerEvaluator<T extends SupervisedLearner> {
 
     double progress = 0;
 
+    Console.progress("Training progress", 0);
     System.out.print("\rTraining progress: 0.0%...             ");
 
     for (int i = 0; i < batches; i++) {
-      System.out.printf("\rTraining progress: %.1f%%               ", i / (double) batches * 100.0);
-
+      Console.progress("Training progress", i / (double) batches * 100.0);
       trainSingleMiniBatch(features, labels, batchSize, i);
     }
 
-    System.out.print("\rTraining progress: 100.0%                         ");
+    Console.progress("Training progress", 100);
   }
 
   public void trainSingleRow(Matrix features, Matrix labels, int row) {
