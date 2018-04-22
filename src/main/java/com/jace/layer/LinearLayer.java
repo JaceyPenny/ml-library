@@ -22,7 +22,7 @@ public class LinearLayer extends ConnectedLayer<Matrix, Vector> {
     setWeights(new Matrix(getOutputs(), getInputs()));
     setBias(new Vector(getOutputs()));
 
-    fillAll(() -> Math.max(0, 1.0 / getInputs()) * Main.RANDOM.nextGaussian());
+    fillAll(() -> Math.max(0, 0.1 / getInputs()) * Main.RANDOM.nextGaussian());
   }
 
   @Override

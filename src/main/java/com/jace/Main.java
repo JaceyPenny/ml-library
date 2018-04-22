@@ -374,6 +374,36 @@ public class Main {
     writer.close();
   }
 
+  private static void generateImages(GenerativeNeuralNetwork gnn, double x, double y) {
+    Vector imageVector = new Vector(64 * 48 * 3);
+
+    Vector state = new Vector(4);
+    state.set(2, x);
+    state.set(3, y);
+
+    for (int w = 0; w < 64; w++) {
+      for (int h = 0; h < 48; h++) {
+        state.set(0, w / 64.0);
+        state.set(1, h / 48.0);
+
+        Vector color = gnn.predict(state);
+
+        int position = (h * 64 + w) * 3;
+
+        imageVector.set(position, color.get(0));
+        imageVector.set(position + 1, color.get(1));
+        imageVector.set(position + 2, color.get(2));
+      }
+    }
+
+    try {
+      String fileName = String.format("image_%d_%d.png", (int)x, (int)y);
+      FileManager.writeImageFromVector(fileName, imageVector, 64, 48);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
   public static void runAssignment6() {
     Console.i("Loading data from \"%s\"...", "data/observations.arff");
 
@@ -397,38 +427,30 @@ public class Main {
 
     gnn.initialize();
 
+    Console.i("Beginning training...");
+
     gnn.trainUnsupervised(observations);
 
-    Vector imageVector = new Vector(64 * 48 * 3);
+    Console.i("Finished training. Writing images...");
 
-    Vector state = new Vector(4);
-
-    for (int w = 0; w < 64; w++) {
-      for (int h = 0; h < 48; h++) {
-        state.set(0, w / 64.0);
-        state.set(1, h / 48.0);
-
-        Vector color = gnn.predict(state);
-
-        int position = (h * 64 + w) * 3;
-
-        imageVector.set(position, color.get(0));
-        imageVector.set(position + 1, color.get(1));
-        imageVector.set(position + 2, color.get(2));
+    for (int x = 0; x <= 8; x++) {
+      for (int y = 0; y <= 8; y++) {
+        generateImages(gnn, x, y);
       }
     }
 
+    Matrix estimatedStates = gnn.getEstimatedState();
     try {
-      FileManager.writeImageFromVector(imageVector, 64, 48);
+      FileManager.writeMatrixToCsv("estimatedStates.csv", new String[]{"x", "y"}, estimatedStates);
     } catch (IOException e) {
-      e.printStackTrace();
+      Console.exception(e);
     }
   }
 
   public static void main(String[] args) {
     Console.init();
     Console.setMessageLevel(Console.MessageLevel.DEBUG);
-    
+
     runAssignment6();
   }
 }

@@ -129,16 +129,28 @@ public class Console {
     }
   }
 
-  public static void progress(String message, double percentage) {
+  public static void p(MessageLevel messageLevel, String message, double percentage) {
     lastMessageWasProgress = true;
     System.out.print("\r> ");
     System.out.printf(
         "%s | %s: %s: %.1f%%",
         formatter.format(new Date()),
-        MessageLevel.INFO,
+        messageLevel,
         message,
         percentage
     );
     System.out.print(fiftySpaces);
+  }
+
+  public static void dp(String message, double percentage) {
+    p(MessageLevel.DEBUG, message, percentage);
+  }
+
+  public static void wp(String message, double percentage) {
+    p(MessageLevel.WARNING, message, percentage);
+  }
+
+  public static void ip(String message, double percentage) {
+    p(MessageLevel.INFO, message, percentage);
   }
 }

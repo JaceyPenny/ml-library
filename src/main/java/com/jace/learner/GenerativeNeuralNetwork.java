@@ -61,7 +61,7 @@ public class GenerativeNeuralNetwork extends NeuralNetwork {
     for (int j = 0; j < 10; j++) {
       for (int i = 0; i < 10000000; i++) {
         if (i % 1000 == 0) {
-          Console.progress("Training epoch " + j, (double) i / MAX_REPS * 100);
+          Console.dp("Training epoch " + j, (double) i / MAX_REPS * 100);
         }
 
         trainingRow = Main.RANDOM.nextInt(observationMatrix.rows());

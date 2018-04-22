@@ -1,5 +1,6 @@
 package com.jace.util;
 
+import com.jace.math.Matrix;
 import com.jace.math.Vector;
 
 import javax.imageio.ImageIO;
@@ -9,7 +10,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class FileManager {
@@ -41,8 +45,27 @@ public class FileManager {
 
   public static PrintWriter getPrintWriterWithName(String fileName) throws IOException {
     File outputFile = getOutputFileWithName(fileName);
-
     return new PrintWriter(new FileOutputStream(outputFile));
+  }
+
+  public static void writeMatrixToCsv(String fileName, String[] headers, Matrix matrix)
+      throws IOException {
+    writeMatrixToCsv(fileName, Arrays.asList(headers), matrix);
+  }
+
+  public static void writeMatrixToCsv(String fileName, List<String> headers, Matrix matrix)
+      throws IOException{
+    PrintWriter outputFile = getPrintWriterWithName(fileName);
+
+    String header = Strings.join(headers, ',');
+    outputFile.println(header);
+
+    for (int i = 0; i < matrix.rows(); i++) {
+      String rowString = Strings.join(matrix.row(i), ',');
+      outputFile.println(rowString);
+    }
+
+    outputFile.close();
   }
 
   private static int getPixel(double r, double g, double b) {
@@ -53,11 +76,11 @@ public class FileManager {
     return (r << 16) + (g << 8) + b;
   }
 
-  public static void writeImageFromVector(Vector image, int width, int height) throws IOException {
-    writeImageFromVector(image, width, height, false);
+  public static void writeImageFromVector(String fileName, Vector image, int width, int height) throws IOException {
+    writeImageFromVector(fileName, image, width, height, false);
   }
 
-  public static void writeImageFromVector(Vector image, int width, int height, boolean isRGB)
+  public static void writeImageFromVector(String fileName, Vector image, int width, int height, boolean isRGB)
       throws IOException {
     Vector imageVector = image;
     if (!isRGB) {
@@ -76,7 +99,7 @@ public class FileManager {
       }
     }
 
-    File outputFile = getOutputFileWithName("output-image.png");
+    File outputFile = getOutputFileWithName(fileName);
     ImageIO.write(bufferedImage, "PNG", outputFile);
   }
 }
