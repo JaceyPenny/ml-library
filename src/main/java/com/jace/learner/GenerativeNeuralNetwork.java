@@ -23,7 +23,6 @@ public class GenerativeNeuralNetwork extends NeuralNetwork {
 
   private int trainingRow = 0;
 
-
   public GenerativeNeuralNetwork(int width, int height, int degreesOfFreedom, int trainingRows) {
     super();
 
@@ -37,7 +36,7 @@ public class GenerativeNeuralNetwork extends NeuralNetwork {
     this.estimatedState = estimatedState;
   }
 
-  public Matrix getEstimatedState() {
+  public Matrix getEstimatedStates() {
     return estimatedState;
   }
 
@@ -59,7 +58,7 @@ public class GenerativeNeuralNetwork extends NeuralNetwork {
     Vector label = new Vector(channels);
 
     for (int j = 0; j < 10; j++) {
-      for (int i = 0; i < 10000000; i++) {
+      for (int i = 0; i < MAX_REPS; i++) {
         if (i % 1000 == 0) {
           Console.dp("Training epoch " + j, (double) i / MAX_REPS * 100);
         }
@@ -99,7 +98,7 @@ public class GenerativeNeuralNetwork extends NeuralNetwork {
 
     Vector stateGradient = new Vector(gradient, 2, 2);
 
-    estimatedState.row(trainingRow).addScaled(stateGradient, getLearningRate());
+    estimatedState.row(trainingRow).addScaled(stateGradient, -1 * getLearningRate());
     gradient.scale(getMomentum());
   }
 
@@ -117,6 +116,7 @@ public class GenerativeNeuralNetwork extends NeuralNetwork {
     Matrix blameMatrix = firstLayer.getBlame().asMatrix(Matrix.VectorType.COLUMN);
 
     Matrix gradientMatrix = Matrix.multiply(weights, blameMatrix, true, false);
+
     gradient.addScaled(gradientMatrix.serialize(), -1);
   }
 }

@@ -374,12 +374,14 @@ public class Main {
     writer.close();
   }
 
-  private static void generateImages(GenerativeNeuralNetwork gnn, double x, double y) {
+  private static int imageOutputCounter = 0;
+
+  private static void generateImage(GenerativeNeuralNetwork gnn, double v0, double v1) {
     Vector imageVector = new Vector(64 * 48 * 3);
 
     Vector state = new Vector(4);
-    state.set(2, x);
-    state.set(3, y);
+    state.set(2, v0);
+    state.set(3, v1);
 
     for (int w = 0; w < 64; w++) {
       for (int h = 0; h < 48; h++) {
@@ -397,7 +399,7 @@ public class Main {
     }
 
     try {
-      String fileName = String.format("image_%d_%d.png", (int)x, (int)y);
+      String fileName = String.format("image_%d.png", imageOutputCounter++);
       FileManager.writeImageFromVector(fileName, imageVector, 64, 48);
     } catch (IOException e) {
       e.printStackTrace();
@@ -433,13 +435,12 @@ public class Main {
 
     Console.i("Finished training. Writing images...");
 
-    for (int x = 0; x <= 8; x++) {
-      for (int y = 0; y <= 8; y++) {
-        generateImages(gnn, x, y);
-      }
+    Matrix estimatedStates = gnn.getEstimatedStates();
+
+    for (int i = 0; i < 20; i++) {
+      generateImage(gnn, estimatedStates.row(i).get(0), estimatedStates.row(i).get(1));
     }
 
-    Matrix estimatedStates = gnn.getEstimatedState();
     try {
       FileManager.writeMatrixToCsv("estimatedStates.csv", new String[]{"x", "y"}, estimatedStates);
     } catch (IOException e) {
