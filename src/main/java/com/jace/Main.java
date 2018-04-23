@@ -3,23 +3,22 @@ package com.jace;
 import com.jace.evaluator.GradientEvaluator;
 import com.jace.evaluator.LearnerEvaluator;
 import com.jace.layer.*;
+import com.jace.learner.GenerativeNeuralNetwork;
 import com.jace.learner.NeuralNetwork;
 import com.jace.math.Matrix;
 import com.jace.math.Vector;
+import com.jace.util.ChartMaker;
+import com.jace.util.Console;
+import com.jace.util.FileManager;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Random;
 
 public class Main {
   public static final Random RANDOM = new Random();
 
   private static int EPOCHS = 10;
-  private static long EXECUTION_TIMESTAMP = System.currentTimeMillis();
 
   private static int BATCH_SIZE = 5;
   private static double MOMENTUM = 0.8;
@@ -34,7 +33,7 @@ public class Main {
 
     LearnerEvaluator<NeuralNetwork> evaluator = new LearnerEvaluator<>(neuralNetwork);
     double finalError = evaluator.crossValidation(features, labels, 10, 5);
-    System.out.println(finalError);
+    Console.i("%f", finalError);
   }
 
   private static void runAssignment2() {
@@ -59,7 +58,7 @@ public class Main {
     Matrix testingLabels = Matrix.fromARFF("data/test_lab.arff").toOneHot();
 
     long endMillis = System.currentTimeMillis();
-    System.out.printf("Loaded all data in %d ms\n", endMillis - startMillis);
+    Console.i("Loaded all data in %d ms", endMillis - startMillis);
 
     trainingFeatures.scale(1.0 / 256.0);
     testingFeatures.scale(1.0 / 256.0);
@@ -71,7 +70,7 @@ public class Main {
 
     // Run a test to show baseline accuracy
     int misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
-    System.out.printf("Before training. Misclassifications: %d\n", misclassifications);
+    Console.i("Before training. Misclassifications: %d", misclassifications);
 
     // Measure and report accuracy
     for (int i = 0; i < EPOCHS; i++) {
@@ -82,7 +81,7 @@ public class Main {
       System.out.printf("Finished training epoch %d: %d ms. Misclassifications: ", i + 1, endTime - startTime);
 
       misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
-      System.out.println(misclassifications);
+      Console.i("%d", misclassifications);
     }
   }
 
@@ -121,24 +120,28 @@ public class Main {
     PrintWriter miniBatchMisclassificationsTesting;
 
     try {
-      stochasticMisclassificationsTraining = getPrintWriterWithName("stochastic_mc_train.csv");
-      stochasticMisclassificationsTesting = getPrintWriterWithName("stochastic_mc_test.csv");
+      stochasticMisclassificationsTraining =
+          FileManager.getPrintWriterWithName("stochastic_mc_train.csv");
+      stochasticMisclassificationsTesting =
+          FileManager.getPrintWriterWithName("stochastic_mc_test.csv");
 
       stochasticMisclassificationsTraining.println("steps,time,misclassifications");
       stochasticMisclassificationsTesting.println("steps,time,misclassifications");
 
-      miniBatchMisclassificationsTraining = getPrintWriterWithName("minibatch_mc_train.csv");
-      miniBatchMisclassificationsTesting = getPrintWriterWithName("minibatch_mc_test.csv");
+      miniBatchMisclassificationsTraining =
+          FileManager.getPrintWriterWithName("minibatch_mc_train.csv");
+      miniBatchMisclassificationsTesting =
+          FileManager.getPrintWriterWithName("minibatch_mc_test.csv");
+
       miniBatchMisclassificationsTraining.println("steps,time,misclassifications");
       miniBatchMisclassificationsTesting.println("steps,time,misclassifications");
     } catch (IOException ioException) {
-      System.err.println("There was an error creating your files.");
+      Console.e("There was an error creating your files.");
       return;
     }
 
     // Run stochastic
-    System.out.println("Running stochastic process...");
-    stochasticNeuralNetwork.printTopology();
+    Console.i("Running stochastic process...");
 
     LearnerEvaluator<NeuralNetwork> stochasticEvaluator = new LearnerEvaluator<>(
         stochasticNeuralNetwork, LearnerEvaluator.TrainingType.STOCHASTIC);
@@ -160,7 +163,7 @@ public class Main {
     }
 
     // Run mini batch
-    System.out.println("Running mini batch process...");
+    Console.i("Running mini batch process...");
     miniBatchNeuralNetwork.printTopology();
 
     LearnerEvaluator<NeuralNetwork> miniBatchEvaluator = new LearnerEvaluator<>(
@@ -186,19 +189,6 @@ public class Main {
     miniBatchMisclassificationsTesting.close();
   }
 
-  private static PrintWriter getPrintWriterWithName(String fileName)
-      throws IOException {
-    Date date = new Date(EXECUTION_TIMESTAMP);
-    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy_MM_dd_hh-mm-ss");
-    String dateString = simpleDateFormat.format(date);
-    File outputDirectory = new File("output/" + dateString);
-    outputDirectory.mkdirs();
-    File outputFile = new File("output/" + dateString + "/" + fileName);
-    outputFile.createNewFile();
-
-    return new PrintWriter(new FileOutputStream(outputFile));
-  }
-
   private static void runMNISTwithCNN() {
     // Load the training data
     long startMillis = System.currentTimeMillis();
@@ -222,9 +212,8 @@ public class Main {
     testingFeatures.scale(1.0 / 256.0);
 
     long endMillis = System.currentTimeMillis();
-    System.out.printf("Loaded all data in %d ms\n\n", endMillis - startMillis);
-
-    System.out.println("Running MNIST Classification example...\n");
+    Console.i("Loaded all data in %d ms", endMillis - startMillis);
+    Console.i("Running MNIST classification example...");
 
     NeuralNetwork neuralNetwork = new NeuralNetwork();
     neuralNetwork.setLearningRate(0.01);
@@ -246,19 +235,19 @@ public class Main {
     evaluator.setBatchSize(10);
 
     int misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
-    System.out.println("\rInitial misclassifications: " + misclassifications + " / " + testingLabels.rows() + '\n');
+    Console.i("Initial misclassifications: %d / %d", misclassifications, testingLabels.rows());
 
     for (int i = 0; i < 100; i++) {
-      System.out.println("Epoch " + (i + 1) + " ===============");
+      Console.i("Epoch %d ==============", i + 1);
 
       evaluator.train(trainingFeatures, trainingLabels);
       misclassifications = evaluator.countMisclassifications(testingFeatures, testingLabels);
-      System.out.println("\rmisclassifications: " + misclassifications + " / " + testingLabels.rows() + '\n');
+      Console.i("Misclassifications: %d / %d", misclassifications, testingLabels.rows());
     }
   }
 
   private static void runAssignment4() {
-    System.out.println("ASSIGNMENT 4: Running the finite differencing test for the sample neural network.\n\n");
+    Console.i("ASSIGNMENT 4: Running the finite differencing test for the sample neural network.\n\n");
 
     NeuralNetwork neuralNetwork = new NeuralNetwork();
 
@@ -284,7 +273,7 @@ public class Main {
     });
 
     Vector testOutput = new Vector(new double[]{
-       1.0, 2.0, 3.0
+        1.0, 2.0, 3.0
     });
 
     Matrix testFeatures = new Matrix(1, 8 * 8);
@@ -300,7 +289,7 @@ public class Main {
   }
 
   public static void runAssignment5() {
-    System.out.println("ASSIGNMENT 5: Run the US Dept of Labor Statistics data through a custom network.");
+    Console.i("ASSIGNMENT 5: Run the US Dept of Labor Statistics data through a custom network.");
 
     Matrix features = new Matrix(357, 1);
     for (int i = 0; i < features.rows(); i++) {
@@ -367,10 +356,10 @@ public class Main {
 
     PrintWriter writer;
     try {
-      writer = getPrintWriterWithName("assignment5output.csv");
+      writer = FileManager.getPrintWriterWithName("assignment5output.csv");
     } catch (Exception e) {
-      e.printStackTrace();
-      System.out.println("Couldn't open file for output.");
+      Console.e("Couldn't open file for output.");
+      Console.exception(e);
       return;
     }
 
@@ -383,10 +372,166 @@ public class Main {
     }
 
     writer.close();
-    System.out.println();
+  }
+
+  private static void generateImage(GenerativeNeuralNetwork gnn, Vector inputState, String fileName) {
+    Vector imageVector = new Vector(64 * 48 * 3);
+
+    Vector state = new Vector(2 + inputState.size());
+    state.set(2, inputState);
+
+    for (int w = 0; w < 64; w++) {
+      for (int h = 0; h < 48; h++) {
+        state.set(0, w / 64.0);
+        state.set(1, h / 48.0);
+
+        Vector color = gnn.predict(state);
+
+        int position = (h * 64 + w) * 3;
+
+        imageVector.set(position, color.get(0));
+        imageVector.set(position + 1, color.get(1));
+        imageVector.set(position + 2, color.get(2));
+      }
+    }
+
+    try {
+      FileManager.writeImageFromVector(fileName, imageVector, 64, 48);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  public static void runAssignment6() {
+    Console.i("Loading data from \"%s\"...", "data/observations.arff");
+
+    Matrix observations = Matrix.fromARFF("data/observations.arff");
+    observations.scale(1 / 256.0);
+
+    Console.i("Data finished loading");
+
+    GenerativeNeuralNetwork observationNetwork =
+        new GenerativeNeuralNetwork(64, 48, 2, observations.rows());
+
+    observationNetwork.setLearningRate(0.1);
+    observationNetwork.setMomentum(0);
+
+    observationNetwork.addLayer(new LinearLayer(4, 12));
+    observationNetwork.addLayer(new TanhLayer(12));
+    observationNetwork.addLayer(new LinearLayer(12, 12));
+    observationNetwork.addLayer(new TanhLayer(12));
+    observationNetwork.addLayer(new LinearLayer(12, 3));
+    observationNetwork.addLayer(new TanhLayer(3));
+
+    observationNetwork.initialize();
+
+    Console.i("Beginning training...");
+
+    observationNetwork.trainUnsupervised(observations);
+
+    Console.i("Finished training. Writing images...");
+
+    Matrix estimatedStates = observationNetwork.getEstimatedStates();
+
+    ChartMaker maker = new ChartMaker();
+    maker.setData(estimatedStates);
+    maker.setWidth(1000);
+    maker.setPointSize(7);
+    maker.setLabelFontSize(24);
+    maker.setBufferPercentage(0.1);
+    maker.setConnectPoints(true);
+
+    maker.draw();
+
+    try {
+      maker.writeToFile(FileManager.getOutputFileWithName("intrinsic.png"));
+    } catch (IOException e) {
+      Console.exception(e);
+    }
+
+    Console.i("Loading actions...");
+
+    Matrix actions = Matrix.fromARFF("data/actions.arff").toOneHot();
+    actions.removeRow(actions.rows() - 1);
+
+    Console.i("Finished loading actions...");
+
+    Console.i("Creating features and labels from learned state representations...");
+
+    double stateRangeX = estimatedStates.columnMax(0) - estimatedStates.columnMin(0);
+    double stateMeanX = estimatedStates.columnMean(0);
+    double stateRangeY = estimatedStates.columnMax(1) - estimatedStates.columnMin(1);
+    double stateMeanY = estimatedStates.columnMean(1);
+
+    Matrix features = estimatedStates.copy();
+    features.removeRow(features.rows() - 1);
+
+    for (int i = 0; i < features.rows(); i++) {
+      features.row(i).set(0, (features.row(i).get(0) - stateMeanX) / stateRangeX);
+      features.row(i).set(1, (features.row(i).get(1) - stateMeanY) / stateRangeY);
+    }
+
+    features = Matrix.joined(actions, features);
+
+    Matrix labels = estimatedStates.copy();
+    labels.removeRow(0);
+
+    for (int i = 0; i < labels.rows(); i++) {
+      labels.row(i).set(0, (labels.row(i).get(0) - stateMeanX) / stateRangeX);
+      labels.row(i).set(1, (labels.row(i).get(1) - stateMeanY) / stateRangeY);
+    }
+
+    Console.i("Finished creating features and labels");
+
+    Console.i("Creating and training state prediction network...");
+
+    NeuralNetwork statePredictionNetwork = new NeuralNetwork();
+    statePredictionNetwork.addLayer(new LinearLayer(6, 6));
+    statePredictionNetwork.addLayer(new TanhLayer(6));
+    statePredictionNetwork.addLayer(new LinearLayer(6, 2));
+    statePredictionNetwork.addLayer(new TanhLayer(2));
+
+    statePredictionNetwork.setLearningRate(0.1);
+    statePredictionNetwork.setMomentum(0);
+
+    statePredictionNetwork.initialize();
+
+    LearnerEvaluator<NeuralNetwork> learnerEvaluator = new LearnerEvaluator<>(statePredictionNetwork);
+    learnerEvaluator.setTrainingType(LearnerEvaluator.TrainingType.BASIC);
+
+    for (int i = 0; i < 5000; i++) {
+      learnerEvaluator.train(features, labels);
+      statePredictionNetwork.setLearningRate(statePredictionNetwork.getLearningRate() * 0.99897);
+    }
+
+    Console.i("Prediction network trained");
+
+    Console.i("Performing assignment 6 steps...");
+
+    Matrix testActions = Matrix.deserialize(
+        new Vector(new double[]{0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 3}),
+        11, 1).toOneHot();
+    testActions.removeRow(10);
+
+    Vector currentState = estimatedStates.row(0).copy();
+    generateImage(observationNetwork, currentState, "frame0.png");
+    currentState.set(0, (currentState.get(0) - stateMeanX) / stateRangeX);
+    currentState.set(1, (currentState.get(1) - stateMeanY) / stateRangeY);
+
+    for (int i = 0; i < testActions.rows(); i++) {
+      Vector predictorInput = Vector.joined(testActions.row(i), currentState);
+      currentState = statePredictionNetwork.predict(predictorInput);
+      Vector stateForImage = currentState.copy();
+      stateForImage.set(0, stateForImage.get(0) * stateRangeX + stateMeanX);
+      stateForImage.set(1, stateForImage.get(1) * stateRangeY + stateMeanY);
+      generateImage(observationNetwork, stateForImage, "frame" + (i + 1) + ".png");
+    }
   }
 
   public static void main(String[] args) {
-    runAssignment5();
+    Console.init();
+    Console.setMessageLevel(Console.MessageLevel.DEBUG);
+
+    runAssignment6();
   }
 }

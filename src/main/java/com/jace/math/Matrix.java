@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -678,6 +679,21 @@ public class Matrix implements Spatial<Matrix> {
   }
 
   /**
+   * Maps this matrix to a matrix of the same size
+   */
+  public Matrix map(Function<Double, Double> mapper) {
+    Matrix newMatrix = new Matrix(rows(), cols());
+
+    for (int i = 0; i < rows(); i++) {
+      for (int j = 0; j < cols(); j++) {
+        newMatrix.row(i).set(j, mapper.apply(row(i).get(j)));
+      }
+    }
+
+    return newMatrix;
+  }
+
+  /**
    * Scales every element in the matrix by the specified value
    */
   public void scale(double scalar) {
@@ -762,6 +778,15 @@ public class Matrix implements Spatial<Matrix> {
     }
 
     return output;
+  }
+
+  public static Matrix joined(Matrix first, Matrix second) {
+    Matrix result = new Matrix(first.rows(), first.cols() + second.cols());
+
+    result.copyBlock(0, 0, first, 0, 0, first.rows(), first.cols(), false);
+    result.copyBlock(0, first.cols(), second, 0, 0, second.rows(), second.cols(), false);
+
+    return result;
   }
 
   public Vector serialize() {

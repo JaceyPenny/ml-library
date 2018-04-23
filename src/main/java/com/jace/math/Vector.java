@@ -257,6 +257,15 @@ public class Vector implements Spatial<Vector> {
     return new Matrix(this, vectorType);
   }
 
+  public static Vector joined(Vector first, Vector second) {
+    Vector result = new Vector(first.size() + second.size());
+
+    result.set(0, first);
+    result.set(first.size(), second);
+
+    return result;
+  }
+
   public double errorAgainst(Vector other) {
     if (size() != other.size()) {
       throw new IllegalArgumentException("These Vectors are not the same size");

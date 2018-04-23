@@ -1,5 +1,6 @@
 package com.jace.math;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public interface Spatial<T extends Spatial> {
@@ -22,4 +23,6 @@ public interface Spatial<T extends Spatial> {
   T copy();
 
   double reduce();
+
+  T map(Function<Double, Double> mapper);
 }
