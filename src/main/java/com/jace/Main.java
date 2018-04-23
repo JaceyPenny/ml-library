@@ -7,6 +7,7 @@ import com.jace.learner.GenerativeNeuralNetwork;
 import com.jace.learner.NeuralNetwork;
 import com.jace.math.Matrix;
 import com.jace.math.Vector;
+import com.jace.util.ChartMaker;
 import com.jace.util.Console;
 import com.jace.util.FileManager;
 
@@ -18,7 +19,6 @@ public class Main {
   public static final Random RANDOM = new Random();
 
   private static int EPOCHS = 10;
-  private static long EXECUTION_TIMESTAMP = System.currentTimeMillis();
 
   private static int BATCH_SIZE = 5;
   private static double MOMENTUM = 0.8;
@@ -437,12 +437,17 @@ public class Main {
 
     Matrix estimatedStates = gnn.getEstimatedStates();
 
-    for (int i = 0; i < 20; i++) {
-      generateImage(gnn, estimatedStates.row(i).get(0), estimatedStates.row(i).get(1));
-    }
+    ChartMaker maker = new ChartMaker();
+    maker.setData(estimatedStates);
+    maker.setWidth(1000);
+    maker.setPointSize(7);
+    maker.setLabelFontSize(24);
+    maker.setBufferPercentage(0.1);
+    maker.setConnectPoints(true);
 
+    maker.draw();
     try {
-      FileManager.writeMatrixToCsv("estimatedStates.csv", new String[]{"x", "y"}, estimatedStates);
+      maker.writeToFile(FileManager.getOutputFileWithName("training-result.png"));
     } catch (IOException e) {
       Console.exception(e);
     }

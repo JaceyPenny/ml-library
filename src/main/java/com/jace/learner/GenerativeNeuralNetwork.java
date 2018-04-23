@@ -8,7 +8,7 @@ import com.jace.math.Vector;
 import com.jace.util.Console;
 
 public class GenerativeNeuralNetwork extends NeuralNetwork {
-  private static int MAX_REPS = 10000000;
+  private static int MAX_REPS = 1000000;
 
   private int trainingRows;
 
@@ -58,34 +58,37 @@ public class GenerativeNeuralNetwork extends NeuralNetwork {
     Vector label = new Vector(channels);
 
     for (int j = 0; j < 10; j++) {
-      for (int i = 0; i < MAX_REPS; i++) {
-        if (i % 1000 == 0) {
-          Console.dp("Training epoch " + j, (double) i / MAX_REPS * 100);
+      int outerReps = MAX_REPS / 1000;
+      int innerReps = MAX_REPS / outerReps;
+
+      for (int outer = 0; outer < outerReps; outer++) {
+        Console.dp("Training epoch " + j, (double) outer / outerReps * 100);
+
+        for (int inner = 0; inner < innerReps; inner++) {
+          trainingRow = Main.RANDOM.nextInt(observationMatrix.rows());
+
+          int p = Main.RANDOM.nextInt(width);
+          int q = Main.RANDOM.nextInt(height);
+
+          Vector v_feature = estimatedState.row(trainingRow);
+          feature.set(0, p / (double) width);
+          feature.set(1, q / (double) height);
+
+          for (int l = 0; l < degreesOfFreedom; l++) {
+            feature.set(2 + l, v_feature.get(l));
+          }
+
+          Vector observationRow = observationMatrix.row(trainingRow);
+          int s = channels * (width * q + p);
+          for (int l = 0; l < channels; l++) {
+            label.set(l, observationRow.get(s + l));
+          }
+
+          predict(feature);
+          backPropagate(label);
+          updateGradient(feature);
+          updateWeights();
         }
-
-        trainingRow = Main.RANDOM.nextInt(observationMatrix.rows());
-
-        int p = Main.RANDOM.nextInt(width);
-        int q = Main.RANDOM.nextInt(height);
-
-        Vector v_feature = estimatedState.row(trainingRow);
-        feature.set(0, p / (double) width);
-        feature.set(1, q / (double) height);
-
-        for (int l = 0; l < degreesOfFreedom; l++) {
-          feature.set(2 + l, v_feature.get(l));
-        }
-
-        Vector observationRow = observationMatrix.row(trainingRow);
-        int s = channels * (width * q + p);
-        for (int l = 0; l < channels; l++) {
-          label.set(l, observationRow.get(s + l));
-        }
-
-        predict(feature);
-        backPropagate(label);
-        updateGradient(feature);
-        updateWeights();
       }
 
       setLearningRate(getLearningRate() * 0.75);
@@ -96,10 +99,10 @@ public class GenerativeNeuralNetwork extends NeuralNetwork {
   public void updateWeights() {
     super.updateWeights();
 
-    Vector stateGradient = new Vector(gradient, 2, 2);
+    Vector stateGradient = new Vector(gradient, 2, degreesOfFreedom);
 
     estimatedState.row(trainingRow).addScaled(stateGradient, -1 * getLearningRate());
-    gradient.scale(getMomentum());
+    gradient.fill(0);
   }
 
   @Override
