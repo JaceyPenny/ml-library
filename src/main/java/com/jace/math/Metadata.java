@@ -172,12 +172,12 @@ public class Metadata {
     attributeToValueMaps.add(attributeToValueMap);
     valueToAttributeMaps.add(valueToAttributeMap);
 
+    // @ATTRIBUTE
+    line = line.substring(11);
+
     Json.StringParser stringParser = new Json.StringParser(line);
-    stringParser.advance(10);
     stringParser.skipWhitespace();
-    stringParser.advance(1);
-    String attributeName = stringParser.until('\'');
-    stringParser.advance(1);
+    String attributeName = stringParser.until('{').replaceAll("\\s+", "");
 
     attributeNames.add(attributeName);
     stringParser.skipWhitespace();

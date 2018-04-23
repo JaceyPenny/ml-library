@@ -780,6 +780,15 @@ public class Matrix implements Spatial<Matrix> {
     return output;
   }
 
+  public static Matrix joined(Matrix first, Matrix second) {
+    Matrix result = new Matrix(first.rows(), first.cols() + second.cols());
+
+    result.copyBlock(0, 0, first, 0, 0, first.rows(), first.cols(), false);
+    result.copyBlock(0, first.cols(), second, 0, 0, second.rows(), second.cols(), false);
+
+    return result;
+  }
+
   public Vector serialize() {
     if (rows() == 0 || cols() == 0) {
       throw new IllegalStateException("Cannot serialize a com.jace.math.Matrix with 0 rows or 0 columns.");

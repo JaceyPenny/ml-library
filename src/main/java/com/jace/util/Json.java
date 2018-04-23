@@ -209,8 +209,9 @@ public abstract class Json {
     }
 
     public void skipWhitespace() {
-      while (pos < str.length() && str.charAt(pos) <= ' ')
+      while (pos < str.length() && str.charAt(pos) <= ' ') {
         pos++;
+      }
     }
 
     void expect(String s) {

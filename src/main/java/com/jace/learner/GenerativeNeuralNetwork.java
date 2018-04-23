@@ -8,7 +8,7 @@ import com.jace.math.Vector;
 import com.jace.util.Console;
 
 public class GenerativeNeuralNetwork extends NeuralNetwork {
-  private static int MAX_REPS = 1000000;
+  private static int MAX_REPS = 10000000;
 
   private int trainingRows;
 

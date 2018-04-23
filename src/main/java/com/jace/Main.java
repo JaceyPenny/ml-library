@@ -374,14 +374,11 @@ public class Main {
     writer.close();
   }
 
-  private static int imageOutputCounter = 0;
-
-  private static void generateImage(GenerativeNeuralNetwork gnn, double v0, double v1) {
+  private static void generateImage(GenerativeNeuralNetwork gnn, Vector inputState, String fileName) {
     Vector imageVector = new Vector(64 * 48 * 3);
 
-    Vector state = new Vector(4);
-    state.set(2, v0);
-    state.set(3, v1);
+    Vector state = new Vector(2 + inputState.size());
+    state.set(2, inputState);
 
     for (int w = 0; w < 64; w++) {
       for (int h = 0; h < 48; h++) {
@@ -399,7 +396,6 @@ public class Main {
     }
 
     try {
-      String fileName = String.format("image_%d.png", imageOutputCounter++);
       FileManager.writeImageFromVector(fileName, imageVector, 64, 48);
     } catch (IOException e) {
       e.printStackTrace();
@@ -414,28 +410,28 @@ public class Main {
 
     Console.i("Data finished loading");
 
-    GenerativeNeuralNetwork gnn =
+    GenerativeNeuralNetwork observationNetwork =
         new GenerativeNeuralNetwork(64, 48, 2, observations.rows());
 
-    gnn.setLearningRate(0.1);
-    gnn.setMomentum(0);
+    observationNetwork.setLearningRate(0.1);
+    observationNetwork.setMomentum(0);
 
-    gnn.addLayer(new LinearLayer(4, 12));
-    gnn.addLayer(new TanhLayer(12));
-    gnn.addLayer(new LinearLayer(12, 12));
-    gnn.addLayer(new TanhLayer(12));
-    gnn.addLayer(new LinearLayer(12, 3));
-    gnn.addLayer(new TanhLayer(3));
+    observationNetwork.addLayer(new LinearLayer(4, 12));
+    observationNetwork.addLayer(new TanhLayer(12));
+    observationNetwork.addLayer(new LinearLayer(12, 12));
+    observationNetwork.addLayer(new TanhLayer(12));
+    observationNetwork.addLayer(new LinearLayer(12, 3));
+    observationNetwork.addLayer(new TanhLayer(3));
 
-    gnn.initialize();
+    observationNetwork.initialize();
 
     Console.i("Beginning training...");
 
-    gnn.trainUnsupervised(observations);
+    observationNetwork.trainUnsupervised(observations);
 
     Console.i("Finished training. Writing images...");
 
-    Matrix estimatedStates = gnn.getEstimatedStates();
+    Matrix estimatedStates = observationNetwork.getEstimatedStates();
 
     ChartMaker maker = new ChartMaker();
     maker.setData(estimatedStates);
@@ -446,10 +442,89 @@ public class Main {
     maker.setConnectPoints(true);
 
     maker.draw();
+
     try {
-      maker.writeToFile(FileManager.getOutputFileWithName("training-result.png"));
+      maker.writeToFile(FileManager.getOutputFileWithName("intrinsic.png"));
     } catch (IOException e) {
       Console.exception(e);
+    }
+
+    Console.i("Loading actions...");
+
+    Matrix actions = Matrix.fromARFF("data/actions.arff").toOneHot();
+    actions.removeRow(actions.rows() - 1);
+
+    Console.i("Finished loading actions...");
+
+    Console.i("Creating features and labels from learned state representations...");
+
+    double stateRangeX = estimatedStates.columnMax(0) - estimatedStates.columnMin(0);
+    double stateMeanX = estimatedStates.columnMean(0);
+    double stateRangeY = estimatedStates.columnMax(1) - estimatedStates.columnMin(1);
+    double stateMeanY = estimatedStates.columnMean(1);
+
+    Matrix features = estimatedStates.copy();
+    features.removeRow(features.rows() - 1);
+
+    for (int i = 0; i < features.rows(); i++) {
+      features.row(i).set(0, (features.row(i).get(0) - stateMeanX) / stateRangeX);
+      features.row(i).set(1, (features.row(i).get(1) - stateMeanY) / stateRangeY);
+    }
+
+    features = Matrix.joined(actions, features);
+
+    Matrix labels = estimatedStates.copy();
+    labels.removeRow(0);
+
+    for (int i = 0; i < labels.rows(); i++) {
+      labels.row(i).set(0, (labels.row(i).get(0) - stateMeanX) / stateRangeX);
+      labels.row(i).set(1, (labels.row(i).get(1) - stateMeanY) / stateRangeY);
+    }
+
+    Console.i("Finished creating features and labels");
+
+    Console.i("Creating and training state prediction network...");
+
+    NeuralNetwork statePredictionNetwork = new NeuralNetwork();
+    statePredictionNetwork.addLayer(new LinearLayer(6, 6));
+    statePredictionNetwork.addLayer(new TanhLayer(6));
+    statePredictionNetwork.addLayer(new LinearLayer(6, 2));
+    statePredictionNetwork.addLayer(new TanhLayer(2));
+
+    statePredictionNetwork.setLearningRate(0.1);
+    statePredictionNetwork.setMomentum(0);
+
+    statePredictionNetwork.initialize();
+
+    LearnerEvaluator<NeuralNetwork> learnerEvaluator = new LearnerEvaluator<>(statePredictionNetwork);
+    learnerEvaluator.setTrainingType(LearnerEvaluator.TrainingType.BASIC);
+
+    for (int i = 0; i < 5000; i++) {
+      learnerEvaluator.train(features, labels);
+      statePredictionNetwork.setLearningRate(statePredictionNetwork.getLearningRate() * 0.99897);
+    }
+
+    Console.i("Prediction network trained");
+
+    Console.i("Performing assignment 6 steps...");
+
+    Matrix testActions = Matrix.deserialize(
+        new Vector(new double[]{0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 3}),
+        11, 1).toOneHot();
+    testActions.removeRow(10);
+
+    Vector currentState = estimatedStates.row(0).copy();
+    generateImage(observationNetwork, currentState, "frame0.png");
+    currentState.set(0, (currentState.get(0) - stateMeanX) / stateRangeX);
+    currentState.set(1, (currentState.get(1) - stateMeanY) / stateRangeY);
+
+    for (int i = 0; i < testActions.rows(); i++) {
+      Vector predictorInput = Vector.joined(testActions.row(i), currentState);
+      currentState = statePredictionNetwork.predict(predictorInput);
+      Vector stateForImage = currentState.copy();
+      stateForImage.set(0, stateForImage.get(0) * stateRangeX + stateMeanX);
+      stateForImage.set(1, stateForImage.get(1) * stateRangeY + stateMeanY);
+      generateImage(observationNetwork, stateForImage, "frame" + (i + 1) + ".png");
     }
   }
 
