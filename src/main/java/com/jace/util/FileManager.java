@@ -69,7 +69,11 @@ public class FileManager {
   }
 
   private static int getPixel(double r, double g, double b) {
-    return getPixel((int) r, (int) g, (int) b);
+    int red = (int) Math.max(0, Math.min(255, Math.round(r)));
+    int green = (int) Math.max(0, Math.min(255, Math.round(g)));
+    int blue = (int) Math.max(0, Math.min(255, Math.round(b)));
+
+    return getPixel(red, green, blue);
   }
 
   private static int getPixel(int r, int g, int b) {
