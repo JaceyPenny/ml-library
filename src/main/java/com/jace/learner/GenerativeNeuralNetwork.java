@@ -96,16 +96,6 @@ public class GenerativeNeuralNetwork extends NeuralNetwork {
   }
 
   @Override
-  public void updateWeights() {
-    super.updateWeights();
-
-    Vector stateGradient = new Vector(gradient, 2, degreesOfFreedom);
-
-    estimatedState.row(trainingRow).addScaled(stateGradient, -1 * getLearningRate());
-    gradient.fill(0);
-  }
-
-  @Override
   public void updateGradient(Vector x) {
     super.updateGradient(x);
 
@@ -121,5 +111,15 @@ public class GenerativeNeuralNetwork extends NeuralNetwork {
     Matrix gradientMatrix = Matrix.multiply(weights, blameMatrix, true, false);
 
     gradient.addScaled(gradientMatrix.serialize(), -1);
+  }
+
+  @Override
+  public void updateWeights() {
+    super.updateWeights();
+
+    Vector stateGradient = new Vector(gradient, 2, degreesOfFreedom);
+
+    estimatedState.row(trainingRow).addScaled(stateGradient, -1 * getLearningRate());
+    gradient.fill(0);
   }
 }
